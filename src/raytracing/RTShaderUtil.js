@@ -354,7 +354,6 @@ export class RTShaderUtil{
     }
 
     //Function:Raytracing 光线追踪
-    //输出像素颜色
     static funcDef_Raytracing(ambientSetting){
         return `
             vec4 fRaytracing(sRay r){
@@ -392,7 +391,7 @@ export class RTShaderUtil{
             void main(){
                 state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
                 float loopsf = 1.0;
-                float randsrng = 0.0001;
+                float randsrng = 0.0000;
                 const int loops = 1;
 
                 vec3 nray = ray / length(ray);
