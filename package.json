@@ -4,11 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "webpack --mode development",
+    "debug": "webpack --mode development",
     "build": "webpack --mode production",
-    "buildbabel": "babel src -d lib",
-    "serve": "webpack-dev-server"
+    "serve": "babel src -d lib",
+    "deploy": "webpack-dev-server"
   },
   "author": "",
   "license": "ISC",
