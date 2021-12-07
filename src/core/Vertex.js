@@ -1,6 +1,3 @@
-import { Color } from "./Color";
-import { Vec } from "./Vec";
-
 //Colored Vertex
 export class Vertex{
     constructor(vec,color){
