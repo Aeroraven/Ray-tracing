@@ -1,5 +1,8 @@
-export class TrivialShader{
+import { ShaderBase } from "./ShaderBase"
+
+export class TrivialShader extends ShaderBase{
     constructor(gl){
+        super(gl)
         this.gl=gl
         this.vertexShader=`
         attribute vec4 aVertexPosition;
@@ -7,7 +10,7 @@ export class TrivialShader{
         uniform mat4 uModelViewMatrix;
         uniform mat4 uProjectionMatrix;
         varying lowp vec4 vColor;
-        varying vec3 vPosition;
+        varying highp vec3 vPosition;
         void main() {
           gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
           vColor = aVertexColor;
@@ -15,14 +18,15 @@ export class TrivialShader{
         `
         this.fragmentShader=`
         varying lowp vec4 vColor;
-        varying vec3 vPosition;
-        
+        varying highp vec3 vPosition;
+
         void main() {
             gl_FragColor = vec4(vColor.x,vColor.y,vColor.z,vColor.w);
         }
         `
     }
-    getLocationsInfo(shaderProgram){
+    getLocationsInfo(){
+        let shaderProgram = this.getShaderProgram()
         return{
             program:shaderProgram,
             attribLocations:{

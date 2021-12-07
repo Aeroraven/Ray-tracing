@@ -21,9 +21,7 @@ export class WebGLScene extends Scene{
             clist = clist.concat(el.colors)
             cnt += el.vertexlist.length
         }
-        console.log(vlist)
-        console.log(clist)
-        console.log(cnt)
+
         //Get WebGL vertex buffer
         const glvbuf = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, glvbuf)
@@ -41,7 +39,7 @@ export class WebGLScene extends Scene{
         }
         
     }
-    render(shaderInfo){
+    render(shaderInfo,camera){
         //Render preparation
         let gl = this.gl
         gl.clearColor(0,0,0,1)
@@ -54,10 +52,10 @@ export class WebGLScene extends Scene{
         const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight
         const zNear = 0.1
         const zFar = 100.0
-        const projectionMatrix = mat4.create()
-        mat4.perspective(projectionMatrix,fov,aspect,zNear,zFar)
-        const modelViewMat = mat4.create()
-        mat4.translate(modelViewMat,modelViewMat,[-0.0,0.0,-6.0])
+
+        let uniformMatrix = camera.getMatrix()
+        let projectionMatrix = uniformMatrix.proj
+        let modelViewMat = uniformMatrix.view
 
         //Get buffer
         const buf = this.getGLVertexArray()

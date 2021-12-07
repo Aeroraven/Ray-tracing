@@ -1,3 +1,5 @@
+import { vec3 } from "gl-matrix"
+
 //3D Vector
 export class Vec{
     constructor(x,y,z){
@@ -22,5 +24,12 @@ export class Vec{
         this.x=x
         this.y=y
         this.z=z
+    }
+    getGLMatVec3(){
+        let r = vec3.create()
+        r[0] = this.x
+        r[1] = this.y
+        r[2] = this.z 
+        return r
     }
 }
