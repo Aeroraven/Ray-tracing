@@ -1,6 +1,5 @@
 import { AmbientLight } from "../light/AmbientLight"
 
-//场景基类
 export class Scene{
     constructor(){
         this.vbuf = new Array()

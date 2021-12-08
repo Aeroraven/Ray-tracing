@@ -1,6 +1,5 @@
 import { vec3 } from "gl-matrix"
 
-//三维向量
 export class Vec{
     constructor(x,y,z){
         this.x=x

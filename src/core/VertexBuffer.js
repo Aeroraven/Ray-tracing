@@ -1,4 +1,4 @@
-//顶点缓冲/图元基类(将Vertex和Color对象转换为WGL支持的数组类型)
+
 export class VertexBuffer{
     constructor(){
         //expand buffer

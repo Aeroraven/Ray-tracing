@@ -1,6 +1,5 @@
 import { mat4 } from "gl-matrix"
 import { Vec } from "./Vec"
-//Camera 对象 (封装投影矩阵和视图矩阵)
 export class Camera{
     constructor(){
         this.projectionMat = mat4.create()
