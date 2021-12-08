@@ -1,16 +1,23 @@
-import { WebGLShaderProcessing } from "../render/WebGLShaderProcessing"
+import { WGLShaderProcessing } from "../render/WGLShaderProcessing"
 
+//着色器基类
 export class ShaderBase{
     constructor(gl){
         this.gl = gl
         this.vertexShader = ""
         this.fragmentShader = ""
     }
-    getShaderProgram(){
-        let shaderHelper = new WebGLShaderProcessing(this.gl)
+    getVertexShader(){
+
+    }
+    getFragmentShader(){
+        
+    }
+    getShaderProgramEx(vert,frag){
+        let shaderHelper = new WGLShaderProcessing(this.gl)
         console.log(this.vertexShader)
         console.log(this.fragmentShader)
-        return shaderHelper.initShaderProgram(this.vertexShader,this.fragmentShader)
+        return shaderHelper.initShaderProgram(vert,frag)
     }
     
 }

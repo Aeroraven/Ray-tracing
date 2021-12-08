@@ -1,4 +1,4 @@
-//RGBA Color
+//RGBA 颜色
 export class Color{
     constructor(r,g,b,a){
         this.r=r

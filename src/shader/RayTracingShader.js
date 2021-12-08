@@ -1,8 +1,9 @@
+import { RTShaderUtil } from "../raytracing/RTShaderUtil"
 import { ShaderBase } from "./ShaderBase"
 
 //主着色器
 //包含顶点和片段着色器
-export class TrivialShader extends ShaderBase{
+export class RayTracingShader extends ShaderBase{
     constructor(gl){
         super(gl)
         this.gl=gl
@@ -10,28 +11,7 @@ export class TrivialShader extends ShaderBase{
         this.fragmentShader=`  `
     }
     getFragShader(){
-        this.fragmentShader=`
-        varying lowp vec4 vColor;
-        varying highp vec3 vPosition;
-        varying highp vec3 vAmbientLight;
-        varying highp vec2 vTextureCoord;
-        uniform int uUsingTex;
-
-        uniform sampler2D uSampler;
-        int temp;
-        //Update
-        void main() {
-            highp vec4 ret;
-            if(uUsingTex==0){
-                ret = vec4(vColor.xyz * vAmbientLight,vColor.w);
-            }else{
-                highp vec4 tex = texture2D(uSampler,vec2(vTextureCoord.s,vTextureCoord.t));
-                ret = mix(tex,vColor,0.5);
-            }
-            ret = ret * vec4(vAmbientLight,1.0);
-            gl_FragColor = ret;
-        }
-        `
+        this.fragmentShader= RTShaderUtil.getFragmentShader()
         return this.fragmentShader
     }
     getVertexShader(){
@@ -44,16 +24,9 @@ export class TrivialShader extends ShaderBase{
         uniform mat4 uProjectionMatrix;
         uniform vec3 uAmbientLight;
 
-        varying lowp vec4 vColor;
-        varying highp vec3 vPosition;
-        varying highp vec3 vAmbientLight;
-        varying highp vec2 vTextureCoord;
 
         void main() {
           gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-          vColor = aVertexColor;
-          vAmbientLight = uAmbientLight;
-          vTextureCoord = aTextureCoord;
         }
         `
         return this.vertexShader

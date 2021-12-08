@@ -1,5 +1,6 @@
 import { VertexBuffer } from "../core/VertexBuffer";
 
+//矩形
 export class Rect extends VertexBuffer{
     constructor(vertexA,vertexB,vertexC,vertexD){
         super()
@@ -17,5 +18,8 @@ export class Rect extends VertexBuffer{
         this.addVertex(this.vb)
         this.addVertex(this.vc)
         this.eval()
+    }
+    getNormalVector(){
+        let v1 = this.va.add(this)
     }
 }

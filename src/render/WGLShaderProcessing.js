@@ -1,4 +1,5 @@
-export class WebGLShaderProcessing{
+//WGL着色器处理
+export class WGLShaderProcessing{
     constructor(gl){
         this.gl=gl
     }

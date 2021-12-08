@@ -11,6 +11,8 @@ module.exports={
     devServer:{
         static: './dist',
         compress: true,
-        port:2333
-    }
+        port:4396,
+        hot:true,
+    },
+    cache:false
 }
