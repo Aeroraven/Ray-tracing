@@ -1,6 +1,3 @@
-//Raytracing: 天空光照 
-//当光线无法和任何物体相交时，返回天空光照颜色。只支持纯色的天空光照。
-//SkyLight和AmbientLight不同
 
 import { Color } from "../../core/Color"
 import { RTShaderVariableMap } from "../RTShaderVariableMap"

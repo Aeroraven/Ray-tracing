@@ -1,7 +1,6 @@
 import { Vertex } from "../core/Vertex";
 import { VertexBuffer } from "../core/VertexBuffer";
 
-//三角形
 export class Triangle extends VertexBuffer{
     constructor(vertexA,vertexB,vertexC){
         super()

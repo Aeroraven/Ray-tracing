@@ -35,7 +35,6 @@ export class RTShaderUtil{
         `
     }
     //Struct:RayCollisionResult
-    //碰撞顶点,碰撞法线
     static structDef_RayCollisionResult(){
         return `
             struct sRayCollisionResult{
@@ -87,7 +86,6 @@ export class RTShaderUtil{
         `
     }
     //Function:RayPlaneIntersection 射线和平面交点
-    //返回距离射线起点的距离(平行返回-1)
     static funcDef_RayPlaneIntersection(){
         return `
             float fRayPlaneIntersection(sRay r,sPlane p){
@@ -102,7 +100,6 @@ export class RTShaderUtil{
         `
     }
     //Function:RaySphereIntersection 射线和球体交点
-    //返回正向且距离近的交点距离
     static funcDef_RaySphereIntersection(){
         return `
             float fRaySphereIntersection(sRay r,sSphere s){
@@ -135,7 +132,6 @@ export class RTShaderUtil{
     }
 
     //Function:InsidePlane 确定点在平面内部
-    //是返回true
     static funcDef_InsidePlane(){
         return`
             bool fInsidePlane(sPlane p,vec3 v){
@@ -155,8 +151,6 @@ export class RTShaderUtil{
     }
 
     //Function:SpecularReflection 镜面反射
-    //输入:输入射线(单位),反射点,反射点处的单位法向量
-    //输出反射射线
     static funcDef_SpecularReflection(){
         return `
             sRay fSpecularReflection(sRay inr,vec3 p,vec3 norm){
@@ -281,7 +275,6 @@ export class RTShaderUtil{
         `
     }
     //Function:DiffuseReflection 漫反射
-    //输出反射射线
     static funcDef_DiffuseReflection(){
         return `
             sRay fDiffuseReflection(sRay inr,vec3 p,vec3 norm){
@@ -307,9 +300,7 @@ export class RTShaderUtil{
             }
         `
     }
-    //Function:RayCollision 光线碰撞检测
-    //输出距离射线最近的碰撞点
-    //TODO: 此处需要动态生成代码
+
     static funcDef_RayCollision(objects=""){
         return `
             sRayCollisionResult fRayCollision(sRay r){
@@ -328,7 +319,7 @@ export class RTShaderUtil{
             }
         `
     }
-    //Function: GammaCorrection Gamma修正
+
     static funcDef_GammaCorrection(){
         return `
             vec4 fGammaCorrection(vec4 col,float g){
@@ -337,7 +328,6 @@ export class RTShaderUtil{
         `
     }
 
-    //Function: ShadowLight 阴影判断
     static funcDef_ShadowLight(){
         return `
             bool fShadowLight(vec3 light,vec3 cp){
@@ -397,7 +387,6 @@ export class RTShaderUtil{
         `
     }
 
-    //Function:Main 主函数
     static funcDef_Main(){
         return `
             void main(){
@@ -473,7 +462,6 @@ export class RTShaderUtil{
         return shaderMap.getSourceFragment()
     }
 
-    //输出片段着色器
     static getFragmentShader(funcParam,shaderMap){
         if(funcParam == null){
             funcParam = {

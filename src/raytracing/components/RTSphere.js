@@ -1,6 +1,5 @@
 //Raytracing: 球体组件
 
-import { Vec } from "../../core/Vec"
 import { RTMaterial } from "./RTMaterial"
 import { RTShaderVariableMap } from "../RTShaderVariableMap"
 
@@ -25,24 +24,18 @@ export class RTSphere{
         this.uCL = this.name+"_CL"
     }
 
-    //更新变量映射表
     updateMap(shaderVarMap){
-        //更新顶点信息
         shaderVarMap.insert(this.name+"_VC",this.vc.getGLMatVec3(),RTShaderVariableMap.VEC3)
         shaderVarMap.insert(this.name+"_RA",this.ra,RTShaderVariableMap.FLOAT)
 
-        //更新颜色信息(辐射强度)
         shaderVarMap.insert(this.name+"_EM",this.material.em.getGLMatVec4(),RTShaderVariableMap.VEC4)
-        //更新颜色信息(材质颜色)
         shaderVarMap.insert(this.name+"_CL",this.material.cl.getGLMatVec4(),RTShaderVariableMap.VEC4)
     }
-    //生成平面
     genObject(){
         let ret = ``
         ret = 'sSphere('+this.name+"_VC"+','+this.name+"_RA"+','+this.name+"_EM"+","+this.name+"_CL)"
         return ret
     }
-    //生成相交判断(动态Shader)
     genShaderIntersection(){
         return `
 

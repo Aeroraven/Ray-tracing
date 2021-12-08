@@ -8,6 +8,7 @@ import { RTShaderVariableMap } from "../RTShaderVariableMap"
  */
 export class RTPointLight{
     constructor(pos,col,attenuation,name){
+        window.alert("请不要使用点光源！")
         this.cl = new Color(1,1,1,1)
         this.pos = new Vec(0,0,0)
         this.atu = new Vec(0,0,0)
@@ -28,6 +29,7 @@ export class RTPointLight{
         shaderVarMap.insert(this.name+"_AT",this.atu.getGLMatVec3(),RTShaderVariableMap.VEC3)
     }
     genShaderTest(){
+        window.alert("请不要使用点光源！")
         return `
                 if(true){
                     if(fShadowLight(`+this.name+'_PS'+`,cp)==false){
