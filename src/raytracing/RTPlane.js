@@ -58,6 +58,7 @@ export class RTPlane{
                                 norm = fPlaneNorm(pl);
                                 emicolor = vec4(`+this.uEM+`);
                                 matcolor = vec4(`+this.uCL+`);
+                                hitType = `+this.material.tp+`;
                                 collided=true;
                             }
                         }

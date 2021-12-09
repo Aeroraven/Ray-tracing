@@ -50,30 +50,35 @@ gl.enable(gl.DEPTH_TEST)
 let vx1 = new Vec(0,-2,30)
 let vx2 = new Vec(-2,0,20)
 let vx3 = new Vec(2,0,20)
-let vx4 = new Vec(0,0.5,10)
+
+let vx4 = new Vec(0,0.4,10)
 let vx5 = new Vec(0,-100,22)
-let vx6 = new Vec(-2,90,5)
+let vx6 = new Vec(0,20,-10)
+let vx7 = new Vec(0.7,-0.6,7)
 
 let rtscene = new RTScene(gl)
-let material = new RTMaterial(new Color(0.1,0.1,0.1,1),new Color(0.25,0.25,0.25,1))
+let material = new RTMaterial(new Color(0.1,0.1,0.1,1),new Color(0.0,0.0,0.0,1))
 let material2 = new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1))
-let material3 = new RTMaterial(new Color(1,1,1,1),new Color(19,19,19,1))
+let material2x = new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1),RTMaterial.SPECULAR)
+let material3 = new RTMaterial(new Color(1,1,1,1),new Color(10,10,10,1))
 
 
 let plane = new RTPlane(vx1,vx2,vx3,material,"plane1")
 let sphere = new RTSphere(vx4,1,material2,"sphere1")
 let sphere2 = new RTSphere(vx5,100,material,"sphere2")
-let sphere3 = new RTSphere(vx6,10,material3,"light")
+let sphere3 = new RTSphere(vx6,20,material3,"light")
+let sphere4 = new RTSphere(vx7,0.5,material2x,"sphere4")
 
 //rtscene.attach(plane)
 rtscene.attach(sphere)
 rtscene.attach(sphere2)
 rtscene.attach(sphere3)
+rtscene.attach(sphere4)
 rtscene.compile()
 rtscene.render()
 
-
 function render(){
+    
     sc.render(shader,cam,rtscene.renderOutput)
     requestAnimationFrame(render)
 }

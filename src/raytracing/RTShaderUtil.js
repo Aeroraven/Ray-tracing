@@ -44,7 +44,7 @@ export class RTShaderUtil{
                 bool collided;
                 vec4 emissionColor;
                 vec4 materialColor;
-                
+                int hitType;
             };
         `
     }
@@ -299,10 +299,11 @@ export class RTShaderUtil{
                 vec4 matcolor = vec4(0.0,0.0,0.0,1.0);
                 bool collided = false;
                 float tc=1e30;
+                int hitType = 0;
                 bool colc = false;
                 `+objects+`
                 vec3 colp = fRayPoint(r,t);
-                sRayCollisionResult ret = sRayCollisionResult(colp,norm,collided,emicolor,matcolor);
+                sRayCollisionResult ret = sRayCollisionResult(colp,norm,collided,emicolor,matcolor,hitType);
                 return ret;
             }
         `
@@ -323,7 +324,12 @@ export class RTShaderUtil{
                     }
                     accColor = accColor + accMaterial * hit.emissionColor;
                     accMaterial = accMaterial * hit.materialColor;
-                    rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
+                    if(hit.hitType==1){
+                        rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
+                    }else if(hit.hitType==2){
+                        rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
+                    }
+                    
                     
                 }
                 return accColor;
@@ -335,9 +341,10 @@ export class RTShaderUtil{
     static funcDef_Main(){
         return `
             void main(){
-                float loopsf = 25.0;
+                state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
+                float loopsf = 1.0;
                 float randsrng = 0.0002;
-                const int loops = 25;
+                const int loops = 1;
 
                 vec3 nray = ray / length(ray);
                 vec3 rnd = vec3(1.14,5.14,1.91);

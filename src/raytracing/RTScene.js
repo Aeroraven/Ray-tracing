@@ -63,6 +63,7 @@ export class RTScene{
         this.observer.prepareShaderMap(this.shaderVar)
         this.shaderVar.insert('uProjectionMatrix',this.screen.getMatrix().proj,RTShaderVariableMap.MAT4)
         this.shaderVar.insert('uModelViewMatrix',this.screen.getMatrix().view,RTShaderVariableMap.MAT4)
+        this.shaderVar.insert('uTime',Date.now()-1639051292614,RTShaderVariableMap.FLOAT)
         
     }
     genIntersectionJudge(){
@@ -85,7 +86,20 @@ export class RTScene{
     compile(){
         this.compiledShader = this.shader.getShaderProgram(this)
     }
-    render(){
+    setTime(){
+        this.shaderVar.insert('uTime',new Date().getTime()-16900000000.0,RTShaderVariableMap.FLOAT)
+    }
+    clear(){
+        this.frameBuffer.start()
+        this.renderOutput.start()
+        gl.viewport(0,0,this.renderOutput.getW(),this.renderOutput.getH())
+        gl.clearColor(0,0,0,1)
+        gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
+        this.renderOutput.end()
+        this.frameBuffer.end()
+
+    }
+    render(doClear = false){
         let gl = this.gl
         this.frameBuffer.start()
         this.renderOutput.start()
@@ -94,7 +108,7 @@ export class RTScene{
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
         gl.useProgram(this.compiledShader)
         this.shaderVar.bindShaderVarible(gl,this.compiledShader)
-
+        this.setTime()
         gl.bindBuffer(gl.ARRAY_BUFFER,this.sheetcb)
         console.log(gl.getAttribLocation(this.compiledShader,'aVertexColor'))
         gl.vertexAttribPointer(gl.getAttribLocation(this.compiledShader,'aVertexColor'),4,gl.FLOAT,false,0,0)
