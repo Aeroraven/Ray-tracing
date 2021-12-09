@@ -9,6 +9,7 @@ import { Camera } from "./core/Camera";
 import { RTScene } from "./raytracing/RTScene";
 import { RTMaterial } from "./raytracing/RTMaterial";
 import { RTPlane } from "./raytracing/RTPlane";
+import { RTSphere } from "./raytracing/RTSphere";
 
 
 //Preparing Canvas
@@ -49,10 +50,15 @@ gl.enable(gl.DEPTH_TEST)
 let vx1 = new Vec(0,-2,30)
 let vx2 = new Vec(-2,0,20)
 let vx3 = new Vec(2,0,20)
+let vx4 = new Vec(0,0,22)
 let rtscene = new RTScene(gl)
 let material = new RTMaterial(new Color(1,0,0,1),new Color(1,1,1,1))
+let material2 = new RTMaterial(new Color(1,1,0,1),new Color(1,0,0,1))
+
 let plane = new RTPlane(vx1,vx2,vx3,material,"plane1")
+let sphere = new RTSphere(vx4,1,material2,"sphere1")
 rtscene.attach(plane)
+rtscene.attach(sphere)
 rtscene.compile()
 rtscene.render()
 

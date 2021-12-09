@@ -22,6 +22,18 @@ export class RTShaderUtil{
             };
         `
     }
+    //Struct:Sphere
+    static structDef_Sphere(){
+        return `
+            struct sSphere{
+                vec3 c;
+                float r;
+                vec4 emissionColor;
+                vec4 materialColor;
+                
+            };
+        `
+    }
     //Struct:RayCollisionResult
     //碰撞顶点,碰撞法线
     static structDef_RayCollisionResult(){
@@ -43,6 +55,7 @@ export class RTShaderUtil{
         let lst = [
             RTShaderUtil.structDef_Plane,
             RTShaderUtil.structDef_Ray,
+            RTShaderUtil.structDef_Sphere,
             RTShaderUtil.structDef_RayCollisionResult
         ]
         let ret = ""
@@ -85,6 +98,38 @@ export class RTShaderUtil{
                 float rd = n.x*di.x+n.y*di.y+n.z*di.z;
                 float rn = n.x*(a.x-or.x)+n.y*(a.y-or.y)+n.z*(a.z-or.z);
                 return rn/rd;
+            }
+        `
+    }
+    //Function:RaySphereIntersection 射线和球体交点
+    //返回正向且距离近的交点距离
+    static funcDef_RaySphereIntersection(){
+        return `
+            float fRaySphereIntersection(sRay r,sSphere s){
+                vec3 p = r.origin-s.c;
+                vec3 d = r.direction;
+                float a = d.x*d.x+d.y*d.y+d.z*d.z;
+                float b = 2.0*(d.x*p.x+d.y*p.y+d.z*p.z);
+                float c = p.x*p.x+p.y*p.y+p.z*p.z-s.r*s.r;
+                float delta = b*b-4.0*a*c;
+                if(delta<1e-10){
+                    return -1.0;
+                }else{
+                    float sdelta = sqrt(delta);
+                    float t1 = (-b+sdelta)/(2.0*a);
+                    float t2 = (-b-sdelta)/(2.0*a);
+                    if(t1>0.0&&t2>0.0){
+                        if(t1>t2){
+                            return t2;
+                        }
+                        return t1;
+                    }
+                    if(t1>0.0&&t2<0.0){
+                        return t1;
+                    }
+                    return t2;
+                }
+                return 0.0;
             }
         `
     }
@@ -268,7 +313,7 @@ export class RTShaderUtil{
         return `
             vec4 fRaytracing(sRay r){
                 vec4 accColor = vec4(0.0,0.0,0.0,1.0);
-                vec4 accMaterial = vec4(0.1,0.1,0.1,1.0);
+                vec4 accMaterial = vec4(0.5,0.5,0.5,1.0);
                 for(int i=1;i < 2;i+=1){
                     sRayCollisionResult hit = fRayCollision(r);
                     if(hit.collided == false){
@@ -302,6 +347,7 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_InsidePlane,null],
             [RTShaderUtil.funcDef_PlaneNorm,null],
             [RTShaderUtil.funcDef_RayPlaneIntersection,null],
+            [RTShaderUtil.funcDef_RaySphereIntersection,null],
             [RTShaderUtil.funcDef_RayPoint,null],
             [RTShaderUtil.funcDef_SpecularReflection,null],
             [RTShaderUtil.funcDef_RayCollision,funcParam.intersection],
