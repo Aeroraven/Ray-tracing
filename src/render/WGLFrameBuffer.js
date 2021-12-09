@@ -21,6 +21,14 @@ export class WGLFrameBuffer{
         gl.bindTexture(gl.TEXTURE_2D,null)
         gl.bindFramebuffer(gl.FRAMEBUFFER,null)
     }
+    bindTexturePingPong(attachment,textureA,textureB){
+        let gl = this.gl
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fb)
+        gl.bindTexture(gl.TEXTURE_2D,textureA.getTexture())
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, attachment,gl.TEXTURE_2D, textureB.getTexture(), 0)
+        gl.bindTexture(gl.TEXTURE_2D,null)
+        gl.bindFramebuffer(gl.FRAMEBUFFER,null)
+    }
     start(){
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER,this.fb)
     }

@@ -5,11 +5,12 @@ export class RTShaderVariableMap{
     constructor(){
         this.hashmap = {}
     }
-    insert(varName,initValue,type){
+    insert(varName,initValue,type,ext=null){
         this.hashmap[varName] = {}
         this.hashmap[varName].type = type
         this.hashmap[varName].initValue = initValue
         this.hashmap[varName].name = varName
+        this.hashmap[varName].ext = ext
     }
     clear(){
         this.hashmap = {}
@@ -49,6 +50,13 @@ export class RTShaderVariableMap{
             if(e.type==RTShaderVariableMap.FLOAT){
                 gl.uniform1f(u,e.initValue)
             }
+            if(e.type==RTShaderVariableMap.SAMPLER2D){
+                if(e.initValue==0){
+                    gl.activeTexture(gl.TEXTURE0)
+                }
+                gl.bindTexture(gl.TEXTURE_2D,e.ext)
+                gl.uniform1i(u,e.initValue)
+            }
             
         }
     }
@@ -61,3 +69,4 @@ RTShaderVariableMap.VEC2 = 'vec2 '
 RTShaderVariableMap.INT = 'int '
 RTShaderVariableMap.BOOL = 'bool '
 RTShaderVariableMap.FLOAT = 'float '
+RTShaderVariableMap.SAMPLER2D = 'sampler2D '

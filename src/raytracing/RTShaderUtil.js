@@ -343,11 +343,11 @@ export class RTShaderUtil{
             void main(){
                 state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
                 float loopsf = 1.0;
-                float randsrng = 0.0002;
+                float randsrng = 0.0001;
                 const int loops = 1;
 
                 vec3 nray = ray / length(ray);
-                vec3 rnd = vec3(1.14,5.14,1.91);
+                vec3 rnd = vec3(1.14+state,5.14+state,1.91+state+uTime);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
                 for(int i=0;i<loops;i++){
                     float r1 = fRandNoiseV3(rnd);
@@ -362,7 +362,9 @@ export class RTShaderUtil{
                     sRay r = sRay(eye,nray,vec4(0.0,0.0,0.0,0.0));
                     fragc = fRaytracing(r)/loopsf + fragc;
                 }
-                gl_FragColor = vec4(fragc);
+                vec4 textc = texture2D(uTexture, vec2(1.0-tex.s,tex.t));
+                fragc = vec4(min(fragc.x,1.0),min(fragc.y,1.0),min(fragc.z,1.0),1.0);
+                gl_FragColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
             }
         `
     }
@@ -398,7 +400,7 @@ export class RTShaderUtil{
             float state = 12.2;
             varying highp vec3 ray;
             varying highp vec4 color;
-
+            varying highp vec2 tex;
         `
     }
     //Uniform

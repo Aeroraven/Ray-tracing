@@ -16,6 +16,7 @@ export class RTShader extends ShaderBase{
         this.vertexShader=`
         attribute vec4 aVertexPosition;
         attribute vec4 aVertexColor;
+        attribute vec2 aVertexTex;
 
         uniform mat4 uModelViewMatrix;
         uniform mat4 uProjectionMatrix;
@@ -26,13 +27,14 @@ export class RTShader extends ShaderBase{
 
         varying highp vec3 ray;
         varying highp vec4 color;
-
+        varying highp vec2 tex;
         void main() {
             float xp = aVertexPosition.x*0.5+0.5;
             float yp = aVertexPosition.y*0.5+0.5;
             gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
             ray = mix(mix(raylb,raylt,yp),mix(rayrb,rayrt,yp),xp);
             color = aVertexColor;
+            tex = aVertexTex;
         }
         `
         return this.vertexShader

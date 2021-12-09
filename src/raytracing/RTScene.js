@@ -17,16 +17,25 @@ export class RTScene{
         this.compiledShader = null
         this.geometryList = []
 
-        this.renderOutput = new WGLTexture(gl,1024,1024,null)
-        this.renderOutput.disableMips()
+        this.renderOutput = [ new WGLTexture(gl,1024,1024,null),new WGLTexture(gl,1024,1024,null)]
+        this.renderOutput[0].disableMips()
+        this.renderOutput[1].disableMips()
         this.frameBuffer = new WGLFrameBuffer(gl)
-        this.frameBuffer.bindTexture(gl.COLOR_ATTACHMENT0,this.renderOutput)
+        this.frameBuffer.bindTexturePingPong(gl.COLOR_ATTACHMENT0,this.renderOutput[0],this.renderOutput[0])
+    
+        this.sampleCount = 0
 
         this.sheetRect=[
             -1,-1,0,
             -1,1,0,
             1,-1,0,
             1,1,0
+        ]
+        this.sheetTex=[
+            0,0,
+            0,1,
+            1,0,
+            1,1,
         ]
         this.sheetColor=[
             0,0,1,1,
@@ -41,6 +50,11 @@ export class RTScene{
         this.sheetcb = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, this.sheetcb)
         gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(this.sheetColor),gl.STATIC_DRAW)
+
+        this.sheettb = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.sheettb)
+        gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(this.sheetTex),gl.STATIC_DRAW)
+
         gl.bindBuffer(gl.ARRAY_BUFFER, null)
 
         this.screen.setOrtho(-1,1,1,-1,-1,1)
@@ -56,6 +70,12 @@ export class RTScene{
     attach(x){
         this.geometryList.push(x)
     }
+    getRenderOutput(){
+        return this.renderOutput[0]
+    }
+    loadAlternativeTexture(){
+        this.shaderVar.insert('uTexture',0,RTShaderVariableMap.SAMPLER2D,this.renderOutput[1].getTexture())
+    }
     updateMap(){
         for(let i = 0;i<this.geometryList.length;i++){
             this.geometryList[i].updateMap(this.shaderVar)
@@ -64,7 +84,8 @@ export class RTScene{
         this.shaderVar.insert('uProjectionMatrix',this.screen.getMatrix().proj,RTShaderVariableMap.MAT4)
         this.shaderVar.insert('uModelViewMatrix',this.screen.getMatrix().view,RTShaderVariableMap.MAT4)
         this.shaderVar.insert('uTime',Date.now()-1639051292614,RTShaderVariableMap.FLOAT)
-        
+        this.shaderVar.insert('uSamples',this.sampleCount,RTShaderVariableMap.INT)
+        this.loadAlternativeTexture()
     }
     genIntersectionJudge(){
         let x = ``
@@ -86,29 +107,35 @@ export class RTScene{
     compile(){
         this.compiledShader = this.shader.getShaderProgram(this)
     }
-    setTime(){
-        this.shaderVar.insert('uTime',new Date().getTime()-16900000000.0,RTShaderVariableMap.FLOAT)
+    updateUniform(){
+        this.shaderVar.insert('uTime',new Date().getTime()-1639051292614,RTShaderVariableMap.FLOAT)
+        this.shaderVar.insert('uSamples',this.sampleCount,RTShaderVariableMap.INT)
     }
     clear(){
         this.frameBuffer.start()
-        this.renderOutput.start()
-        gl.viewport(0,0,this.renderOutput.getW(),this.renderOutput.getH())
+        this.renderOutput[0].start()
+        gl.viewport(0,0,this.getRenderOutput().getW(),this.getRenderOutput().getH())
         gl.clearColor(0,0,0,1)
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
-        this.renderOutput.end()
+        this.renderOutput[0].end()
         this.frameBuffer.end()
 
     }
     render(doClear = false){
+        //Draw To Tex0 & Using Tex1 to Render
         let gl = this.gl
+        
+        this.frameBuffer.bindTexturePingPong(gl.COLOR_ATTACHMENT0,this.renderOutput[0],this.renderOutput[1])
+        
         this.frameBuffer.start()
-        this.renderOutput.start()
-        gl.viewport(0,0,this.renderOutput.getW(),this.renderOutput.getH())
+        this.renderOutput[0].start()
+        gl.viewport(0,0,this.getRenderOutput().getW(),this.getRenderOutput().getH())
         gl.clearColor(0,0,0,1)
-        gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
+        //gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
         gl.useProgram(this.compiledShader)
         this.shaderVar.bindShaderVarible(gl,this.compiledShader)
-        this.setTime()
+        this.updateUniform()
+        this.loadAlternativeTexture()
         gl.bindBuffer(gl.ARRAY_BUFFER,this.sheetcb)
         console.log(gl.getAttribLocation(this.compiledShader,'aVertexColor'))
         gl.vertexAttribPointer(gl.getAttribLocation(this.compiledShader,'aVertexColor'),4,gl.FLOAT,false,0,0)
@@ -118,11 +145,12 @@ export class RTScene{
         gl.vertexAttribPointer(gl.getAttribLocation(this.compiledShader,'aVertexPosition'),3,gl.FLOAT,false,0,0)
         gl.enableVertexAttribArray(gl.getAttribLocation(this.compiledShader,'aVertexPosition'))
 
-        
         gl.drawArrays(gl.TRIANGLE_STRIP,0,4)
-        
-        this.renderOutput.end()
+        this.sampleCount++;
+
+        this.renderOutput[0].end()
         this.frameBuffer.end()
+        this.renderOutput.reverse()
     }
 
 }

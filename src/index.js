@@ -57,10 +57,10 @@ let vx6 = new Vec(0,20,-10)
 let vx7 = new Vec(0.7,-0.6,7)
 
 let rtscene = new RTScene(gl)
-let material = new RTMaterial(new Color(0.1,0.1,0.1,1),new Color(0.0,0.0,0.0,1))
+let material = new RTMaterial(new Color(0.05,0.05,0.05,1),new Color(0.0,0.0,0.0,1))
 let material2 = new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1))
 let material2x = new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1),RTMaterial.SPECULAR)
-let material3 = new RTMaterial(new Color(1,1,1,1),new Color(10,10,10,1))
+let material3 = new RTMaterial(new Color(1,1,1,1),new Color(12,12,12,1))
 
 
 let plane = new RTPlane(vx1,vx2,vx3,material,"plane1")
@@ -78,8 +78,8 @@ rtscene.compile()
 rtscene.render()
 
 function render(){
-    
-    sc.render(shader,cam,rtscene.renderOutput)
+    rtscene.render()
+    sc.render(shader,cam,rtscene.getRenderOutput())
     requestAnimationFrame(render)
 }
 requestAnimationFrame(render)
