@@ -5,7 +5,7 @@ import { Vec } from "../core/Vec"
 export class RTMaterial{
     constructor(color,emission){
         this.cl = new Color(1,1,1,1)
-        this.em = new Vec(1,1,1)
+        this.em = new Color(1,1,1,1)
         if(color!=null){
             this.cl = color
         }

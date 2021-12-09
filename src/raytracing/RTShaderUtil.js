@@ -16,8 +16,9 @@ export class RTShaderUtil{
         return `
             struct sPlane{
                 vec3 x,y,z;
-                vec4 materialColor;
                 vec4 emissionColor;
+                vec4 materialColor;
+                
             };
         `
     }
@@ -29,8 +30,9 @@ export class RTShaderUtil{
                 vec3 colvex;
                 vec3 colnorm;
                 bool collided;
-                vec4 materialColor;
                 vec4 emissionColor;
+                vec4 materialColor;
+                
             };
         `
     }
@@ -79,12 +81,9 @@ export class RTShaderUtil{
                 vec3 n = fPlaneNorm(p);
                 vec3 di = r.direction;
                 vec3 or = r.origin;
-                vec3 a = p.x;
+                vec3 a = p.y;
                 float rd = n.x*di.x+n.y*di.y+n.z*di.z;
                 float rn = n.x*(a.x-or.x)+n.y*(a.y-or.y)+n.z*(a.z-or.z);
-                if(rd<1e-10){
-                    return -1.0;
-                }
                 return rn/rd;
             }
         `
@@ -250,9 +249,11 @@ export class RTShaderUtil{
             sRayCollisionResult fRayCollision(sRay r){
                 float t = 1e30;
                 vec3 norm = vec3(0.0,0.0,0.0);
-                vec4 emicolor = vec4(0.0,0.0,0.0,0.0);
-                vec4 matcolor = vec4(0.0,0.0,0.0,0.0);
+                vec4 emicolor = vec4(1.0,0.0,0.0,1.0);
+                vec4 matcolor = vec4(0.0,0.0,0.0,1.0);
                 bool collided = false;
+                float tc=1e30;
+                bool colc = false;
                 `+objects+`
                 vec3 colp = fRayPoint(r,t);
                 sRayCollisionResult ret = sRayCollisionResult(colp,norm,collided,emicolor,matcolor);
@@ -266,15 +267,16 @@ export class RTShaderUtil{
     static funcDef_Raytracing(){
         return `
             vec4 fRaytracing(sRay r){
-                vec4 accColor = vec4(0.0,0.0,0.0,1.0);
+                vec4 accColor = vec4(1.0,0.0,0.0,1.0);
                 vec4 accMaterial = vec4(1.0,1.0,1.0,1.0);
-                for(int i=1;i < 5;i+=1){
+                for(int i=1;i < 2;i+=1){
                     sRayCollisionResult hit = fRayCollision(r);
                     if(hit.collided == false){
                         break;
                     }
                     accColor = accColor + accMaterial * hit.emissionColor;
                     accMaterial = accMaterial * hit.materialColor;
+                    break;
                 }
                 return accColor;
             }
@@ -285,27 +287,35 @@ export class RTShaderUtil{
     static funcDef_Main(){
         return `
             void main(){
-                gl_FragColor = vec4(1.0,1.0,1.0,1.0);
+                vec3 nray = ray / length(ray);
+                sRay r = sRay(eye,nray,vec4(0.0,0.0,0.0,0.0));
+                vec4 fragc = fRaytracing(r);
+                gl_FragColor = vec4(fragc);
             }
         `
     }
     //完成函数输出
-    static funcDefConcat(){
+    static funcDefConcat(funcParam){
         let lst = [
-            RTShaderUtil.funcDef_RandNoiseV3,
-            RTShaderUtil.funcDef_DiffuseReflection,
-            RTShaderUtil.funcDef_InsidePlane,
-            RTShaderUtil.funcDef_PlaneNorm,
-            RTShaderUtil.funcDef_RayPlaneIntersection,
-            RTShaderUtil.funcDef_RayPoint,
-            RTShaderUtil.funcDef_SpecularReflection,
-            RTShaderUtil.funcDef_RayCollision,
-            RTShaderUtil.funcDef_Raytracing,
-            RTShaderUtil.funcDef_Main
+            [RTShaderUtil.funcDef_RandNoiseV3,null],
+            [RTShaderUtil.funcDef_DiffuseReflection,null],
+            [RTShaderUtil.funcDef_InsidePlane,null],
+            [RTShaderUtil.funcDef_PlaneNorm,null],
+            [RTShaderUtil.funcDef_RayPlaneIntersection,null],
+            [RTShaderUtil.funcDef_RayPoint,null],
+            [RTShaderUtil.funcDef_SpecularReflection,null],
+            [RTShaderUtil.funcDef_RayCollision,funcParam.intersection],
+            [RTShaderUtil.funcDef_Raytracing,null],
+            [RTShaderUtil.funcDef_Main,null]
         ]
         let ret = ""
         for(let i=0;i<lst.length;i++){
-            ret += lst[i]()
+            if(lst[i][1]===null){
+                ret += lst[i][0]()
+            }else{
+                ret += lst[i][0](lst[i][1])
+            }
+            
         }
         return ret
     }
@@ -313,17 +323,33 @@ export class RTShaderUtil{
     static globalVarDefConcat(){
         return `
             int state;
+            varying highp vec3 ray;
+            varying highp vec4 color;
+
         `
+    }
+    //Uniform
+    static uniformDefConcat(shaderMap){
+        if(shaderMap==null){
+            return ``
+        }
+        return shaderMap.getSourceFragment()
     }
 
     //输出片段着色器
-    static getFragmentShader(){
+    static getFragmentShader(funcParam,shaderMap){
+        if(funcParam == null){
+            funcParam = {
+                intersection : ``
+            }
+        }
         let ret = `
             precision highp float;
-        `
+        \n`
+        ret += RTShaderUtil.uniformDefConcat(shaderMap)
         ret += RTShaderUtil.globalVarDefConcat()
         ret += RTShaderUtil.structDefConcat();
-        ret += RTShaderUtil.funcDefConcat();
+        ret += RTShaderUtil.funcDefConcat(funcParam);
         return ret;
     }
 

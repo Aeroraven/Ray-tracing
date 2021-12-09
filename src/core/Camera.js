@@ -13,6 +13,9 @@ export class Camera{
     setPerspective(fovy,aspect,zNear,zFar){
         mat4.perspective(this.projectionMat,fovy,aspect,zNear,zFar)
     }
+    setOrtho(left,right,top,bottom,zNear,zFar){
+        mat4.ortho(this.projectionMat,left,right,bottom,top,zNear,zFar)
+    }
     setCamPosition(camvec){
         this.camPositon = camvec
     }

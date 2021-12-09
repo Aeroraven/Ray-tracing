@@ -8,10 +8,10 @@ export class Vec{
         this.z=z
     }
     add(vec){
-        return new Vec(x+vec.x,y+vec.y,z+vec.z)
+        return new Vec(this.x+vec.x,this.y+vec.y,this.z+vec.z)
     }
     dot(vec){
-        return new Vec(x*vec.x,y*vec.y,z*vec.z)
+        return new Vec(this.x*vec.x,this.y*vec.y,this.z*vec.z)
     }
     cross(vec){
         return new Vec(

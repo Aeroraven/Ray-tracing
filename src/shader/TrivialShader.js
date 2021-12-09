@@ -12,7 +12,7 @@ export class TrivialShader extends ShaderBase{
     getFragShader(){
         this.fragmentShader=`
         varying lowp vec4 vColor;
-        varying highp vec3 vPosition;
+        varying highp vec4 vPosition;
         varying highp vec3 vAmbientLight;
         varying highp vec2 vTextureCoord;
         uniform int uUsingTex;
@@ -26,10 +26,12 @@ export class TrivialShader extends ShaderBase{
                 ret = vec4(vColor.xyz * vAmbientLight,vColor.w);
             }else{
                 highp vec4 tex = texture2D(uSampler,vec2(vTextureCoord.s,vTextureCoord.t));
-                ret = mix(tex,vColor,0.5);
+                ret = tex;
+                
             }
             ret = ret * vec4(vAmbientLight,1.0);
             gl_FragColor = ret;
+            
         }
         `
         return this.fragmentShader
@@ -45,7 +47,7 @@ export class TrivialShader extends ShaderBase{
         uniform vec3 uAmbientLight;
 
         varying lowp vec4 vColor;
-        varying highp vec3 vPosition;
+        varying highp vec4 vPosition;
         varying highp vec3 vAmbientLight;
         varying highp vec2 vTextureCoord;
 
@@ -54,6 +56,7 @@ export class TrivialShader extends ShaderBase{
           vColor = aVertexColor;
           vAmbientLight = uAmbientLight;
           vTextureCoord = aTextureCoord;
+          vPosition = aVertexPosition;
         }
         `
         return this.vertexShader
