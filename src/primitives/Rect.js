@@ -15,8 +15,8 @@ export class Rect extends VertexBuffer{
         this.addVertex(this.vb)
         this.addVertex(this.vc)
         this.addVertex(this.vd)
-        this.addVertex(this.vb)
         this.addVertex(this.vc)
+        this.addVertex(this.vb)
         this.eval()
     }
     getNormalVector(){

@@ -17,7 +17,7 @@ export class RTScene{
         this.compiledShader = null
         this.geometryList = []
 
-        this.renderOutput = new WGLTexture(gl,512,512,null)
+        this.renderOutput = new WGLTexture(gl,1024,1024,null)
         this.renderOutput.disableMips()
         this.frameBuffer = new WGLFrameBuffer(gl)
         this.frameBuffer.bindTexture(gl.COLOR_ATTACHMENT0,this.renderOutput)

@@ -101,7 +101,7 @@ export class RTShaderUtil{
                 float s2 = length(cross(v2,v3));
                 float s3 = length(cross(v3,v1));
                 float s0 = length(cross(p.y-p.x,p.z-p.x));
-                if(abs(abs(s0)-abs(s1)-abs(s2)-abs(s3))<1e-10){
+                if(abs(abs(s0)-abs(s1)-abs(s2)-abs(s3))<1e-5){
                     return true;
                 }
                 return false;
@@ -267,8 +267,8 @@ export class RTShaderUtil{
     static funcDef_Raytracing(){
         return `
             vec4 fRaytracing(sRay r){
-                vec4 accColor = vec4(1.0,0.0,0.0,1.0);
-                vec4 accMaterial = vec4(1.0,1.0,1.0,1.0);
+                vec4 accColor = vec4(0.0,0.0,0.0,1.0);
+                vec4 accMaterial = vec4(0.1,0.1,0.1,1.0);
                 for(int i=1;i < 2;i+=1){
                     sRayCollisionResult hit = fRayCollision(r);
                     if(hit.collided == false){

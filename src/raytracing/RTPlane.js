@@ -69,11 +69,7 @@ export class RTPlane{
                                 collided=true;
                             }
                         }
-                        
-                    }else{
-                        emicolor = vec4(1.0,0.0,0.0,1.0);
                     }
-                    
                 }
             
         `
