@@ -312,16 +312,18 @@ export class RTShaderUtil{
     static funcDef_Raytracing(){
         return `
             vec4 fRaytracing(sRay r){
+                sRay rp = r;
                 vec4 accColor = vec4(0.0,0.0,0.0,1.0);
                 vec4 accMaterial = vec4(0.5,0.5,0.5,1.0);
-                for(int i=1;i < 2;i+=1){
-                    sRayCollisionResult hit = fRayCollision(r);
+                for(int i=1;i < 15;i+=1){
+                    sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
                         break;
                     }
                     accColor = accColor + accMaterial * hit.emissionColor;
                     accMaterial = accMaterial * hit.materialColor;
-                    break;
+                    rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
+                    
                 }
                 return accColor;
             }
@@ -332,9 +334,25 @@ export class RTShaderUtil{
     static funcDef_Main(){
         return `
             void main(){
+                float loopsf = 10.0;
+                const int loops = 10;
                 vec3 nray = ray / length(ray);
-                sRay r = sRay(eye,nray,vec4(0.0,0.0,0.0,0.0));
-                vec4 fragc = fRaytracing(r);
+                vec3 rnd = vec3(1.14,5.14,1.91);
+                vec4 fragc = vec4(0.0,0.0,0.0,0.0);
+                for(int i=0;i<loops;i++){
+                    float r1 = fRandNoiseV3(rnd);
+                    rnd = vec3(rnd.y,rnd.z,r1);
+                    float r2 = fRandNoiseV3(rnd);
+                    rnd = vec3(rnd.y,rnd.z,r2);
+                    float r3 = fRandNoiseV3(rnd);
+                    rnd = vec3(rnd.y,rnd.z,r3);
+                    nray = nray + rnd * 0.003;
+                    nray = nray / length(nray);
+
+                    sRay r = sRay(eye,nray,vec4(0.0,0.0,0.0,0.0));
+                    fragc = fRaytracing(r)/loopsf + fragc;
+
+                }
                 gl_FragColor = vec4(fragc);
             }
         `
