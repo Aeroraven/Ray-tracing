@@ -15,8 +15,6 @@ export class ShaderBase{
     }
     getShaderProgramEx(vert,frag){
         let shaderHelper = new WGLShaderProcessing(this.gl)
-        console.log(vert)
-        console.log(frag)
         return shaderHelper.initShaderProgram(vert,frag)
     }
     

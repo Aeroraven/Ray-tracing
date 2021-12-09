@@ -137,7 +137,6 @@ export class RTScene{
         this.updateUniform()
         this.loadAlternativeTexture()
         gl.bindBuffer(gl.ARRAY_BUFFER,this.sheetcb)
-        console.log(gl.getAttribLocation(this.compiledShader,'aVertexColor'))
         gl.vertexAttribPointer(gl.getAttribLocation(this.compiledShader,'aVertexColor'),4,gl.FLOAT,false,0,0)
         gl.enableVertexAttribArray(gl.getAttribLocation(this.compiledShader,'aVertexColor'))
 

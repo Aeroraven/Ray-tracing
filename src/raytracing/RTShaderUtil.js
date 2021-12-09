@@ -317,7 +317,7 @@ export class RTShaderUtil{
                 sRay rp = r;
                 vec4 accColor = vec4(0.0,0.0,0.0,1.0);
                 vec4 accMaterial = vec4(0.5,0.5,0.5,1.0);
-                for(int i=1;i < 10;i+=1){
+                for(int i=1;i < 20;i+=1){
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
                         break;

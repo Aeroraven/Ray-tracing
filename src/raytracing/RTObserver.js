@@ -28,7 +28,7 @@ export class RTObserver{
         let projvecm = mat4.create()
         mat4.mul(projvecm,projvecm,orgvecm)
         let projvec = new Vec(projvecm[0],projvecm[4],projvecm[8])
-        console.log(this.cam)
+        //console.log(this.cam)
         let ray = projvec.add(this.getEye().neg())
         return ray.getGLMatVec3()
     }
