@@ -261,7 +261,8 @@ export class RTShaderUtil{
                                             dot(p2,x2), dot(p3,x3) ) );
             }
             float fRandNoiseV3(vec3 x){
-                return snoise(x);
+                state += snoise(x+vec3(state,state+144.13,151.49))+24.89;
+                return snoise(x+vec3(state+613.5,state+644.11,state+593.4));
             }
         `
     }
@@ -274,7 +275,7 @@ export class RTShaderUtil{
                 if(dot(inr.direction,norm)>0.0){
                     n = -n;
                 }
-                float dx = fRandNoiseV3(vec3(n.xyz))-0.5;
+                float dx = fRandNoiseV3(vec3(n.xyz)+vec3(21.114,4.1244,588.11))-0.5;
                 float dy = fRandNoiseV3(vec3(dx,dx,n.z))-0.5;
                 float dz = fRandNoiseV3(vec3(dy,dx,n.z))-0.5;
                 vec3 tp = vec3(dx,dy,dz)/length(vec3(dx,dy,dz));
@@ -315,14 +316,14 @@ export class RTShaderUtil{
                 sRay rp = r;
                 vec4 accColor = vec4(0.0,0.0,0.0,1.0);
                 vec4 accMaterial = vec4(0.5,0.5,0.5,1.0);
-                for(int i=1;i < 15;i+=1){
+                for(int i=1;i < 10;i+=1){
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
                         break;
                     }
                     accColor = accColor + accMaterial * hit.emissionColor;
                     accMaterial = accMaterial * hit.materialColor;
-                    rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
+                    rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                     
                 }
                 return accColor;
@@ -334,8 +335,10 @@ export class RTShaderUtil{
     static funcDef_Main(){
         return `
             void main(){
-                float loopsf = 10.0;
-                const int loops = 10;
+                float loopsf = 25.0;
+                float randsrng = 0.0002;
+                const int loops = 25;
+
                 vec3 nray = ray / length(ray);
                 vec3 rnd = vec3(1.14,5.14,1.91);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
@@ -346,12 +349,11 @@ export class RTShaderUtil{
                     rnd = vec3(rnd.y,rnd.z,r2);
                     float r3 = fRandNoiseV3(rnd);
                     rnd = vec3(rnd.y,rnd.z,r3);
-                    nray = nray + rnd * 0.003;
+                    nray = nray + rnd * randsrng;
                     nray = nray / length(nray);
 
                     sRay r = sRay(eye,nray,vec4(0.0,0.0,0.0,0.0));
                     fragc = fRaytracing(r)/loopsf + fragc;
-
                 }
                 gl_FragColor = vec4(fragc);
             }
@@ -386,7 +388,7 @@ export class RTShaderUtil{
     //变量输出
     static globalVarDefConcat(){
         return `
-            int state;
+            float state = 12.2;
             varying highp vec3 ray;
             varying highp vec4 color;
 
