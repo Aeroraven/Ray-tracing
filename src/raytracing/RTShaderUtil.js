@@ -170,9 +170,6 @@ export class RTShaderUtil{
                 vec3 o = ox/length(ox);
                 sRay ret = sRay(p,o,inr.color);
                 return ret;
-
-
-
             }
         `
     }
@@ -261,9 +258,25 @@ export class RTShaderUtil{
                 return 105.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), 
                                             dot(p2,x2), dot(p3,x3) ) );
             }
+            float random(vec3 scale, float seed) {
+                return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) * 43758.5453 + seed);
+            }
+            vec3 uniformlyRandomDirection(float seed) {
+                float u = random(vec3(12.9898, 78.233, 151.7182), seed);
+                float v = random(vec3(63.7264, 10.873, 623.6736), seed);
+                float z = 1.0 - 2.0 * u;
+                float r = sqrt(1.0 - z * z);
+                float angle = 6.283185307179586 * v;
+                return vec3(r * cos(angle), r * sin(angle), z);
+            }
+            float rand(vec2 co){
+                return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+            }
             float fRandNoiseV3(vec3 x){
                 state += snoise(x+vec3(state,state+144.13,151.49))+24.89;
-                return snoise(x+vec3(state+613.5,state+644.11,state+593.4));
+                state -= random(x,state);
+                float ret = rand(vec2(x.x+x.y+x.z,state));
+                return ret;
             }
         `
     }
@@ -282,7 +295,8 @@ export class RTShaderUtil{
                 float dx = sin(fx)*cos(fy);
                 float dy = sin(fx)*sin(fy);
                 float dz = cos(fy);
-                vec3 tp = vec3(dx,dy,dz)/length(vec3(dx,dy,dz));
+                vec3 tn = uniformlyRandomDirection(state);
+                vec3 tp = tn/length(tn);
                 vec3 newdir = tp;
                 if(dot(newdir,n)<0.0){
                     newdir = -newdir;
@@ -301,7 +315,7 @@ export class RTShaderUtil{
             sRayCollisionResult fRayCollision(sRay r){
                 float t = 1e30;
                 vec3 norm = vec3(0.0,0.0,0.0);
-                vec4 emicolor = vec4(1.0,0.0,0.0,1.0);
+                vec4 emicolor = vec4(1.0,1.0,1.0,1.0);
                 vec4 matcolor = vec4(0.0,0.0,0.0,1.0);
                 bool collided = false;
                 float tc=1e30;
@@ -342,7 +356,7 @@ export class RTShaderUtil{
     static funcDef_ShadowTests(objects=""){
         return `
             float fShadowTests(vec3 cp){
-                float intensity = 1.0;
+                float intensity = 0.0;
                 `+objects+`
                 return intensity;
             }
@@ -356,7 +370,7 @@ export class RTShaderUtil{
             vec4 fRaytracing(sRay r){
                 sRay rp = r;
                 vec4 accColor = vec4(0.0,0.0,0.0,1.0);
-                vec4 accMaterial = vec4(0.99,0.99,0.99,1.0);
+                vec4 accMaterial = vec4(1.0,1.0,1.0,1.0);
                 vec4 ambient = vec4(0.0,0.0,0.0,1.0);
                 vec4 skylight = vec4(0.0,0.0,0.0,1.0);
                 `+ambientSetting+`
@@ -367,7 +381,8 @@ export class RTShaderUtil{
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
-                    float shadowIntensity = fShadowTests(hit.colvex);
+                    float shadowIntensity = 1.0;
+                    //float shadowIntensity = fShadowTests(hit.colvex);
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
@@ -388,19 +403,14 @@ export class RTShaderUtil{
             void main(){
                 state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
                 float loopsf = 1.0;
-                float randsrng = 0.0005;
+                float randsrng = 0.0001;
                 const int loops = 1;
 
                 vec3 nray = ray / length(ray);
                 vec3 rnd = vec3(1.14+state,5.14+state,1.91+state+uTime);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
                 for(int i=0;i<loops;i++){
-                    float r1 = fRandNoiseV3(rnd);
-                    rnd = vec3(rnd.y,rnd.z,r1);
-                    float r2 = fRandNoiseV3(rnd);
-                    rnd = vec3(rnd.y,rnd.z,r2);
-                    float r3 = fRandNoiseV3(rnd);
-                    rnd = vec3(rnd.y,rnd.z,r3);
+                    rnd = uniformlyRandomDirection(state);
                     nray = nray + rnd * randsrng;
                     nray = nray / length(nray);
 
@@ -409,7 +419,7 @@ export class RTShaderUtil{
                 }
                 vec4 textc = texture2D(uTexture, vec2(1.0-tex.s,tex.t));
                 fragc = vec4(min(fragc.x,1.0),min(fragc.y,1.0),min(fragc.z,1.0),1.0);
-                fragc = fGammaCorrection(fragc,0.62);
+                fragc = fGammaCorrection(fragc,0.55);
                 gl_FragColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
             }
         `
