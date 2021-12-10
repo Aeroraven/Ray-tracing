@@ -131,7 +131,7 @@ export class RTScene{
         this.renderOutput[0].start()
         gl.viewport(0,0,this.getRenderOutput().getW(),this.getRenderOutput().getH())
         gl.clearColor(0,0,0,1)
-        //gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
+
         gl.useProgram(this.compiledShader)
         this.shaderVar.bindShaderVarible(gl,this.compiledShader)
         this.updateUniform()

@@ -8,7 +8,6 @@ import { Rect } from "./primitives/Rect";
 import { Camera } from "./core/Camera";
 import { RTScene } from "./raytracing/RTScene";
 import { RTMaterial } from "./raytracing/RTMaterial";
-import { RTPlane } from "./raytracing/RTPlane";
 import { RTSphere } from "./raytracing/RTSphere";
 
 
@@ -49,28 +48,23 @@ gl.enable(gl.DEPTH_TEST)
 //Start Raytracing Render
 let rtscene = new RTScene(gl)
 
-let vx1 = new Vec(0,-2,30)
-let vx2 = new Vec(-2,0,20)
-let vx3 = new Vec(2,0,20)
+
 
 let vx4 = new Vec(0,0.4,10)
 let vx5 = new Vec(0,-100,22)
 let vx6 = new Vec(0,20,-10)
 let vx7 = new Vec(0.7,-0.6,7)
-let vx8 = new Vec(-2.1,2,10)
 
 
-let material = new RTMaterial(new Color(0.05,0.05,0.05,1),new Color(0.0,0.0,0.0,1))
-let material2 = new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1))
+
+let material = new RTMaterial(new Color(0.15,0.15,0.15,1),new Color(0.0,0.0,0.0,1),RTMaterial.DIFFUSE)
+let material2 = new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1),RTMaterial.SPECULAR)
 let material2x = new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1),RTMaterial.SPECULAR)
-let material3 = new RTMaterial(new Color(1,1,1,1),new Color(12,12,12,1))
+let material3 = new RTMaterial(new Color(1,1,1,1),new Color(10,10,10,1),RTMaterial.DIFFUSE)
 
-
-let plane = new RTPlane(vx1,vx2,vx3,material,"plane1")
 let sphere = new RTSphere(vx4,1,material2,"sphere1")
 let sphere2 = new RTSphere(vx5,100,material,"sphere2")
 let sphere3 = new RTSphere(vx6,20,material3,"light")
-let sphere3x = new RTSphere(vx8,1,material3,"light2")
 let sphere4 = new RTSphere(vx7,0.5,material2x,"sphere4")
 
 //rtscene.attach(plane)
