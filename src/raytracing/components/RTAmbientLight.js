@@ -1,4 +1,4 @@
-//Raytracing: 环境光照组件
+//Raytracing: 环境光照
 //该类用于实现RayTracer中的环境光照，light文件夹下的AmbientLight是渲染主场景的环境光照，二者不同
 
 import { Color } from "../../core/Color";

@@ -277,10 +277,11 @@ export class RTShaderUtil{
                 if(dot(inr.direction,norm)>0.0){
                     n = -n;
                 }
-                
-                float dx = fRandNoiseV3(vec3(n.y+state,n.x+state,n.z+state)+vec3(21.114,49.1244,58.11))-0.5;
-                float dy = fRandNoiseV3(vec3(dx,dx,n.z))-0.5;
-                float dz = fRandNoiseV3(vec3(dy,dx,n.z))-0.5;
+                float fx = fRandNoiseV3(vec3(n.y+state,n.x+state,n.z+state));
+                float fy = fRandNoiseV3(vec3(fx,state,fx));
+                float dx = sin(fx)*cos(fy);
+                float dy = sin(fx)*sin(fy);
+                float dz = cos(fy);
                 vec3 tp = vec3(dx,dy,dz)/length(vec3(dx,dy,dz));
                 vec3 newdir = tp;
                 if(dot(newdir,n)<0.0){
@@ -328,26 +329,25 @@ export class RTShaderUtil{
             vec4 fRaytracing(sRay r){
                 sRay rp = r;
                 vec4 accColor = vec4(0.0,0.0,0.0,1.0);
-                vec4 accMaterial = vec4(0.5,0.5,0.5,1.0);
+                vec4 accMaterial = vec4(0.99,0.99,0.99,1.0);
                 vec4 ambient = vec4(0.0,0.0,0.0,1.0);
+                vec4 skylight = vec4(0.0,0.0,0.0,1.0);
+                `+ambientSetting+`
                 for(int i=1;i < 25;i+=1){
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
+                        accColor = accColor + accMaterial * skylight; 
                         break;
-                    }`+ambientSetting+
-                    `
-                    
+                    }
                     accMaterial = accMaterial * hit.materialColor;
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
-                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert * lambert;
                     }else if(hit.hitType==2){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
                     }
-                    
-                    
                 }
                 return accColor;
             }
@@ -381,7 +381,7 @@ export class RTShaderUtil{
                 }
                 vec4 textc = texture2D(uTexture, vec2(1.0-tex.s,tex.t));
                 fragc = vec4(min(fragc.x,1.0),min(fragc.y,1.0),min(fragc.z,1.0),1.0);
-                fragc = fGammaCorrection(fragc,0.5);
+                fragc = fGammaCorrection(fragc,0.62);
                 gl_FragColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
             }
         `

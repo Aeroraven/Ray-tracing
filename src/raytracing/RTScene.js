@@ -4,6 +4,7 @@ import { Vec } from "../core/Vec"
 import { WGLFrameBuffer } from "../render/WGLFrameBuffer"
 import { WGLTexture } from "../render/WGLTexture"
 import { RTAmbientLight } from "./components/RTAmbientLight"
+import { RTSkyLight } from "./components/RTSkyLight"
 import { RTObserver } from "./RTObserver"
 import { RTShader } from "./RTShader"
 import { RTShaderUtil } from "./RTShaderUtil"
@@ -68,6 +69,7 @@ export class RTScene{
 
         //Optional
         this.ambientLight = new RTAmbientLight(new Color(0,0,0,1))
+        this.skylight = new RTSkyLight(new Color(0,0,0,1))
         
     }
     clear(){
@@ -77,7 +79,10 @@ export class RTScene{
     attach(x){
         if(x instanceof RTAmbientLight){
             this.ambientLight = x
-        }else{
+        }else if(x instanceof RTSkyLight){
+            this.skylight = x
+        }
+        else{
             this.geometryList.push(x)
         }
     }
@@ -93,6 +98,7 @@ export class RTScene{
         }
         this.observer.prepareShaderMap(this.shaderVar)
         this.ambientLight.updateMap(this.shaderVar)
+        this.skylight.updateMap(this.shaderVar)
         this.shaderVar.insert('uProjectionMatrix',this.screen.getMatrix().proj,RTShaderVariableMap.MAT4)
         this.shaderVar.insert('uModelViewMatrix',this.screen.getMatrix().view,RTShaderVariableMap.MAT4)
         this.shaderVar.insert('uTime',Date.now()-this.startTimestamp,RTShaderVariableMap.FLOAT)
@@ -109,7 +115,7 @@ export class RTScene{
     genFragmentShader(){
         this.updateMap()
         let ins = this.genIntersectionJudge()
-        let amb = this.ambientLight.genCode()
+        let amb = this.ambientLight.genCode()+this.skylight.genCode()
         let funcParam = {
             intersection: ins,
             ambientSetting:amb
