@@ -1,7 +1,9 @@
 import { Camera } from "../core/Camera"
+import { Color } from "../core/Color"
 import { Vec } from "../core/Vec"
 import { WGLFrameBuffer } from "../render/WGLFrameBuffer"
 import { WGLTexture } from "../render/WGLTexture"
+import { RTAmbientLight } from "./components/RTAmbientLight"
 import { RTObserver } from "./RTObserver"
 import { RTShader } from "./RTShader"
 import { RTShaderUtil } from "./RTShaderUtil"
@@ -22,6 +24,8 @@ export class RTScene{
         this.renderOutput[1].disableMips()
         this.frameBuffer = new WGLFrameBuffer(gl)
         this.frameBuffer.bindTexturePingPong(gl.COLOR_ATTACHMENT0,this.renderOutput[0],this.renderOutput[0])
+
+        this.startTimestamp = Date.now()
     
         this.sampleCount = 0
 
@@ -61,6 +65,9 @@ export class RTScene{
         this.screen.setCamCenter(new Vec(0,0,-1))
         this.screen.setCamUp(new Vec(0,1,0))
         this.screen.setCamPosition(new Vec(0,0,0))
+
+        //Optional
+        this.ambientLight = new RTAmbientLight(new Color(0,0,0,1))
         
     }
     clear(){
@@ -68,7 +75,11 @@ export class RTScene{
         this.shaderVar.clear()
     }
     attach(x){
-        this.geometryList.push(x)
+        if(x instanceof RTAmbientLight){
+            this.ambientLight = x
+        }else{
+            this.geometryList.push(x)
+        }
     }
     getRenderOutput(){
         return this.renderOutput[0]
@@ -81,9 +92,10 @@ export class RTScene{
             this.geometryList[i].updateMap(this.shaderVar)
         }
         this.observer.prepareShaderMap(this.shaderVar)
+        this.ambientLight.updateMap(this.shaderVar)
         this.shaderVar.insert('uProjectionMatrix',this.screen.getMatrix().proj,RTShaderVariableMap.MAT4)
         this.shaderVar.insert('uModelViewMatrix',this.screen.getMatrix().view,RTShaderVariableMap.MAT4)
-        this.shaderVar.insert('uTime',Date.now()-1639051292614,RTShaderVariableMap.FLOAT)
+        this.shaderVar.insert('uTime',Date.now()-this.startTimestamp,RTShaderVariableMap.FLOAT)
         this.shaderVar.insert('uSamples',this.sampleCount,RTShaderVariableMap.INT)
         this.loadAlternativeTexture()
     }
@@ -97,8 +109,10 @@ export class RTScene{
     genFragmentShader(){
         this.updateMap()
         let ins = this.genIntersectionJudge()
+        let amb = this.ambientLight.genCode()
         let funcParam = {
-            intersection: ins
+            intersection: ins,
+            ambientSetting:amb
         }
 
         let ret = RTShaderUtil.getFragmentShader(funcParam,this.shaderVar)
@@ -108,7 +122,7 @@ export class RTScene{
         this.compiledShader = this.shader.getShaderProgram(this)
     }
     updateUniform(){
-        this.shaderVar.insert('uTime',new Date().getTime()-1639051292614,RTShaderVariableMap.FLOAT)
+        this.shaderVar.insert('uTime',new Date().getTime()-this.startTimestamp,RTShaderVariableMap.FLOAT)
         this.shaderVar.insert('uSamples',this.sampleCount,RTShaderVariableMap.INT)
     }
     clear(){

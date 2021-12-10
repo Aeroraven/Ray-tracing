@@ -1,6 +1,8 @@
-import { Vec } from "../core/Vec"
+//Raytracing: 球体组件
+
+import { Vec } from "../../core/Vec"
 import { RTMaterial } from "./RTMaterial"
-import { RTShaderVariableMap } from "./RTShaderVariableMap"
+import { RTShaderVariableMap } from "../RTShaderVariableMap"
 
 export class RTSphere{
 

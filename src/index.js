@@ -7,8 +7,9 @@ import { Color } from "./core/Color";
 import { Rect } from "./primitives/Rect";
 import { Camera } from "./core/Camera";
 import { RTScene } from "./raytracing/RTScene";
-import { RTMaterial } from "./raytracing/RTMaterial";
-import { RTSphere } from "./raytracing/RTSphere";
+import { RTMaterial } from "./raytracing/components/RTMaterial";
+import { RTSphere } from "./raytracing/components/RTSphere";
+import { RTAmbientLight } from "./raytracing/components/RTAmbientLight";
 
 
 //Preparing Canvas
@@ -49,30 +50,36 @@ gl.enable(gl.DEPTH_TEST)
 let rtscene = new RTScene(gl)
 
 
+let sphere = new RTSphere(
+    new Vec(0,0.4,10),
+    1,
+    new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1),RTMaterial.SPECULAR),
+    "sphere1"
+)
 
-let vx4 = new Vec(0,0.4,10)
-let vx5 = new Vec(0,-100,22)
-let vx6 = new Vec(0,20,-10)
-let vx7 = new Vec(0.7,-0.6,7)
+let sphere2 = new RTSphere(
+    new Vec(0,-100,22),
+    100,
+    new RTMaterial(new Color(0.15,0.15,0.15,1),new Color(0.0,0.0,0.0,1),RTMaterial.DIFFUSE),
+    "sphere2"
+)
 
+let sphere3 = new RTSphere(
+    new Vec(0.7,-0.6,7),
+    0.5,
+    new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1),RTMaterial.SPECULAR),
+    "sphere4"
+)
 
+let ambientLight = new RTAmbientLight(
+    new Color(0.3,0.3,0.3,1.0)
+)
 
-let material = new RTMaterial(new Color(0.15,0.15,0.15,1),new Color(0.0,0.0,0.0,1),RTMaterial.DIFFUSE)
-let material2 = new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1),RTMaterial.SPECULAR)
-let material2x = new RTMaterial(new Color(1,1,1,1),new Color(0,0,0,1),RTMaterial.SPECULAR)
-let material3 = new RTMaterial(new Color(1,1,1,1),new Color(10,10,10,1),RTMaterial.DIFFUSE)
-
-let sphere = new RTSphere(vx4,1,material2,"sphere1")
-let sphere2 = new RTSphere(vx5,100,material,"sphere2")
-let sphere3 = new RTSphere(vx6,20,material3,"light")
-let sphere4 = new RTSphere(vx7,0.5,material2x,"sphere4")
-
-//rtscene.attach(plane)
 rtscene.attach(sphere)
 rtscene.attach(sphere2)
 rtscene.attach(sphere3)
-//rtscene.attach(sphere3x)
-rtscene.attach(sphere4)
+rtscene.attach(ambientLight)
+
 rtscene.compile()
 rtscene.render()
 

@@ -311,18 +311,20 @@ export class RTShaderUtil{
 
     //Function:Raytracing 光线追踪
     //输出像素颜色
-    static funcDef_Raytracing(){
+    static funcDef_Raytracing(ambientSetting){
         return `
             vec4 fRaytracing(sRay r){
                 sRay rp = r;
                 vec4 accColor = vec4(0.0,0.0,0.0,1.0);
                 vec4 accMaterial = vec4(0.5,0.5,0.5,1.0);
+                vec4 ambient = vec4(0.0,0.0,0.0,1.0);
                 for(int i=1;i < 20;i+=1){
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
                         break;
-                    }
-                    accColor = accColor + accMaterial * hit.emissionColor;
+                    }`+ambientSetting+
+                    `
+                    accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                     accMaterial = accMaterial * hit.materialColor;
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
@@ -343,7 +345,7 @@ export class RTShaderUtil{
             void main(){
                 state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
                 float loopsf = 1.0;
-                float randsrng = 0.0001;
+                float randsrng = 0.0002;
                 const int loops = 1;
 
                 vec3 nray = ray / length(ray);
@@ -380,7 +382,7 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_RayPoint,null],
             [RTShaderUtil.funcDef_SpecularReflection,null],
             [RTShaderUtil.funcDef_RayCollision,funcParam.intersection],
-            [RTShaderUtil.funcDef_Raytracing,null],
+            [RTShaderUtil.funcDef_Raytracing,funcParam.ambientSetting],
             [RTShaderUtil.funcDef_Main,null]
         ]
         let ret = ""
@@ -415,7 +417,8 @@ export class RTShaderUtil{
     static getFragmentShader(funcParam,shaderMap){
         if(funcParam == null){
             funcParam = {
-                intersection : ``
+                intersection : ``,
+                ambientSetting: ``,
             }
         }
         let ret = `

@@ -1,10 +1,9 @@
-//Raytracing: 平面类
-
-import { Vec } from "../core/Vec"
-import { RTMaterial } from "./RTMaterial"
-import { RTShaderVariableMap } from "./RTShaderVariableMap"
-
+//Raytracing: 平面组件
 //法向量正负按顶点给出顺序计算
+
+import { RTMaterial } from "./RTMaterial"
+import { RTShaderVariableMap } from "../RTShaderVariableMap"
+
 export class RTPlane{
 
     //va,vb,vc : Vec

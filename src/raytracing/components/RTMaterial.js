@@ -1,7 +1,7 @@
-import { Color } from "../core/Color"
-import { Vec } from "../core/Vec"
+//Raytracing:材质组件
 
-//Raytracing:材质
+import { Color } from "../../core/Color"
+
 export class RTMaterial{
     constructor(color,emission,type){
         this.cl = new Color(1,1,1,1)
