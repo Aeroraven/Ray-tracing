@@ -5,6 +5,7 @@ import { WGLFrameBuffer } from "../render/WGLFrameBuffer"
 import { WGLTexture } from "../render/WGLTexture"
 import { RTAmbientLight } from "./components/RTAmbientLight"
 import { RTSkyLight } from "./components/RTSkyLight"
+import { RTPointLight } from "./components/RTPointLight"
 import { RTObserver } from "./RTObserver"
 import { RTShader } from "./RTShader"
 import { RTShaderUtil } from "./RTShaderUtil"
@@ -66,6 +67,8 @@ export class RTScene{
         this.screen.setCamCenter(new Vec(0,0,-1))
         this.screen.setCamUp(new Vec(0,1,0))
         this.screen.setCamPosition(new Vec(0,0,0))
+        //Spotlights
+        this.pointlights = new Array()
 
         //Optional
         this.ambientLight = new RTAmbientLight(new Color(0,0,0,1))
@@ -75,12 +78,15 @@ export class RTScene{
     clear(){
         this.geometryList = []
         this.shaderVar.clear()
+        this.pointlights = []
     }
     attach(x){
         if(x instanceof RTAmbientLight){
             this.ambientLight = x
         }else if(x instanceof RTSkyLight){
             this.skylight = x
+        }else if(x instanceof RTPointLight){
+            this.pointlights.push(x)
         }
         else{
             this.geometryList.push(x)
@@ -95,6 +101,9 @@ export class RTScene{
     updateMap(){
         for(let i = 0;i<this.geometryList.length;i++){
             this.geometryList[i].updateMap(this.shaderVar)
+        }
+        for(let i = 0;i<this.pointlights.length;i++){
+            this.pointlights[i].updateMap(this.shaderVar)
         }
         this.observer.prepareShaderMap(this.shaderVar)
         this.ambientLight.updateMap(this.shaderVar)
@@ -112,13 +121,23 @@ export class RTScene{
         }
         return x
     }
+    genSpotlightJudge(){
+        let x = ``
+        for(let i = 0;i<this.pointlights.length;i++){
+            x+=this.pointlights[i].genShaderTest()
+        }
+
+        return x
+    }
     genFragmentShader(){
         this.updateMap()
         let ins = this.genIntersectionJudge()
         let amb = this.ambientLight.genCode()+this.skylight.genCode()
+        let spl = this.genSpotlightJudge()
         let funcParam = {
             intersection: ins,
-            ambientSetting:amb
+            ambientSetting:amb,
+            pointlight:spl
         }
 
         let ret = RTShaderUtil.getFragmentShader(funcParam,this.shaderVar)

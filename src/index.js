@@ -11,6 +11,7 @@ import { RTMaterial } from "./raytracing/components/RTMaterial";
 import { RTSphere } from "./raytracing/components/RTSphere";
 import { RTAmbientLight } from "./raytracing/components/RTAmbientLight";
 import { RTSkyLight } from "./raytracing/components/RTSkyLight";
+import { RTPointLight } from "./raytracing/components/RTPointLight";
 
 
 //Preparing Canvas
@@ -52,10 +53,10 @@ let rtscene = new RTScene(gl)
 
 
 let sphere = new RTSphere(
-    new Vec(0,0.4,10),
+    new Vec(0,0.3,10),
     1,
     new RTMaterial(
-        new Color(0.5,0.5,0.5,1),
+        new Color(1.0,0.3,0.3,1),
         new Color(0,0,0,1),
         RTMaterial.DIFFUSE
     ),
@@ -63,40 +64,49 @@ let sphere = new RTSphere(
 )
 
 let sphere2 = new RTSphere(
-    new Vec(0,-100,22),
-    100,
+    new Vec(0.7,-0.6,7),
+    0.5,
     new RTMaterial(
-        new Color(0.5,0.5,0.5,1.0),
+        new Color(0.75,0.75,0.75,1.0),
         new Color(0,0,0,1),
         RTMaterial.DIFFUSE
     ),
     "sphere2"
 )
 
-let sphere3 = new RTSphere(
-    new Vec(0.7,-0.6,7),
-    0.5,
+let ground = new RTSphere(
+    new Vec(0,-100,22),
+    100,
     new RTMaterial(
-        new Color(1,1,1,1),
+        new Color(0.75,0.75,0.75,1.0),
         new Color(0,0,0,1),
         RTMaterial.DIFFUSE
     ),
-    "sphere4"
+    "ground"
 )
+
 
 
 let ambientLight = new RTAmbientLight(
-    new Color(0.3,0.3,0.3,1.0)
+    new Color(0.1,0.1,0.1,1.0)
 )
 
 let skyLight = new RTSkyLight(
-    new Color(0.5,0.8,1.0,1.0)
+    new Color(0.2,0.5,0.7,1.0)
 )
 
+let pointlight = new RTPointLight(
+    new Vec(-1,3,4),
+    new Color(1,1,1,1),
+    "pointlight"
+)
+
+rtscene.attach(ground)
 rtscene.attach(sphere)
 rtscene.attach(sphere2)
 rtscene.attach(ambientLight)
 rtscene.attach(skyLight)
+rtscene.attach(pointlight)
 
 rtscene.compile()
 rtscene.render()

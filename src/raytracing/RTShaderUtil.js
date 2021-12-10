@@ -314,10 +314,37 @@ export class RTShaderUtil{
             }
         `
     }
+    //Function: GammaCorrection Gamma修正
     static funcDef_GammaCorrection(){
         return `
             vec4 fGammaCorrection(vec4 col,float g){
                 return vec4(pow(col.x,g),pow(col.y,g),pow(col.z,g),pow(col.w,g));
+            }
+        `
+    }
+
+    //Function: ShadowLight 阴影判断
+    static funcDef_ShadowLight(){
+        return `
+            bool fShadowLight(vec3 light,vec3 cp){
+                vec3 d = light - cp;
+                vec3 s = cp;
+                d = d/length(d);
+                s = s + d*0.01;
+                sRay r = sRay(s,d,vec4(1.0,1.0,1.0,1.0));
+                if(fRayCollision(r).collided){
+                    return true;
+                }
+                return false;
+            }
+        `
+    }
+    static funcDef_ShadowTests(objects=""){
+        return `
+            float fShadowTests(vec3 cp){
+                float intensity = 1.0;
+                `+objects+`
+                return intensity;
             }
         `
     }
@@ -340,12 +367,13 @@ export class RTShaderUtil{
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
+                    float shadowIntensity = fShadowTests(hit.colvex);
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
-                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert * lambert;
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert  * shadowIntensity;
                     }else if(hit.hitType==2){
-                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * shadowIntensity;
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
                     }
                 }
@@ -399,14 +427,19 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_RayPoint,null],
             [RTShaderUtil.funcDef_SpecularReflection,null],
             [RTShaderUtil.funcDef_RayCollision,funcParam.intersection],
+            [RTShaderUtil.funcDef_ShadowLight,null],
+            [RTShaderUtil.funcDef_ShadowTests,funcParam.pointlight],
             [RTShaderUtil.funcDef_Raytracing,funcParam.ambientSetting],
             [RTShaderUtil.funcDef_Main,null]
         ]
         let ret = ""
         for(let i=0;i<lst.length;i++){
+            console.log(lst[i][0])
             if(lst[i][1]===null){
                 ret += lst[i][0]()
             }else{
+
+                console.log(lst[i][1])
                 ret += lst[i][0](lst[i][1])
             }
             
@@ -436,6 +469,7 @@ export class RTShaderUtil{
             funcParam = {
                 intersection : ``,
                 ambientSetting: ``,
+                pointlight:``
             }
         }
         let ret = `
