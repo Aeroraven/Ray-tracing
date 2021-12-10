@@ -65,7 +65,7 @@ let sphere2 = new RTSphere(
     new Vec(0,-100,22),
     100,
     new RTMaterial(
-        new Color(0.15,0.15,0.15,1),
+        new Color(1,1,1,1),
         new Color(0.0,0.0,0.0,1),
         RTMaterial.DIFFUSE
     ),
@@ -90,7 +90,18 @@ let lightBall = new RTSphere(
         new Color(1,1,1,1),
         new Color(12,12,12,12),
         RTMaterial.DIFFUSE
-    )
+    ),
+    "lightball1"
+)
+let lightBall2 = new RTSphere(
+    new Vec(-0.7,-0.6,7),
+    0.5,
+    new RTMaterial(
+        new Color(1,1,1,1),
+        new Color(12,12,12,1),
+        RTMaterial.DIFFUSE
+    ),
+    "lightball2"
 )
 
 let ambientLight = new RTAmbientLight(
@@ -101,7 +112,7 @@ rtscene.attach(sphere)
 rtscene.attach(sphere2)
 rtscene.attach(sphere3)
 rtscene.attach(ambientLight)
-rtscene.attach(lightBall)
+rtscene.attach(lightBall2)
 
 rtscene.compile()
 rtscene.render()

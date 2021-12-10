@@ -161,6 +161,7 @@ export class RTShaderUtil{
         return `
             sRay fSpecularReflection(sRay inr,vec3 p,vec3 norm){
                 vec3 n = norm;
+                n = n/length(n);
                 if(dot(inr.direction,norm)>0.0){
                     n = -n;
                 }
@@ -272,15 +273,19 @@ export class RTShaderUtil{
         return `
             sRay fDiffuseReflection(sRay inr,vec3 p,vec3 norm){
                 vec3 n = norm;
+                n = n / length(n);
                 if(dot(inr.direction,norm)>0.0){
                     n = -n;
                 }
-                float dx = fRandNoiseV3(vec3(n.xyz)+vec3(21.114,4.1244,588.11))-0.5;
+                
+                float dx = fRandNoiseV3(vec3(n.y+state,n.x+state,n.z+state)+vec3(21.114,49.1244,58.11))-0.5;
                 float dy = fRandNoiseV3(vec3(dx,dx,n.z))-0.5;
                 float dz = fRandNoiseV3(vec3(dy,dx,n.z))-0.5;
                 vec3 tp = vec3(dx,dy,dz)/length(vec3(dx,dy,dz));
-                vec3 rc = n + p;
-                vec3 newdir = tp + rc - p;
+                vec3 newdir = tp;
+                if(dot(newdir,n)<0.0){
+                    newdir = -newdir;
+                }
                 vec3 o = newdir / length(newdir);
                 sRay rt = sRay(p,o,inr.color);
                 return rt;
@@ -308,6 +313,13 @@ export class RTShaderUtil{
             }
         `
     }
+    static funcDef_GammaCorrection(){
+        return `
+            vec4 fGammaCorrection(vec4 col,float g){
+                return vec4(pow(col.x,g),pow(col.y,g),pow(col.z,g),pow(col.w,g));
+            }
+        `
+    }
 
     //Function:Raytracing 光线追踪
     //输出像素颜色
@@ -318,7 +330,7 @@ export class RTShaderUtil{
                 vec4 accColor = vec4(0.0,0.0,0.0,1.0);
                 vec4 accMaterial = vec4(0.5,0.5,0.5,1.0);
                 vec4 ambient = vec4(0.0,0.0,0.0,1.0);
-                for(int i=1;i < 20;i+=1){
+                for(int i=1;i < 25;i+=1){
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
                         break;
@@ -348,7 +360,7 @@ export class RTShaderUtil{
             void main(){
                 state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
                 float loopsf = 1.0;
-                float randsrng = 0.0002;
+                float randsrng = 0.0005;
                 const int loops = 1;
 
                 vec3 nray = ray / length(ray);
@@ -369,6 +381,7 @@ export class RTShaderUtil{
                 }
                 vec4 textc = texture2D(uTexture, vec2(1.0-tex.s,tex.t));
                 fragc = vec4(min(fragc.x,1.0),min(fragc.y,1.0),min(fragc.z,1.0),1.0);
+                fragc = fGammaCorrection(fragc,0.5);
                 gl_FragColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
             }
         `
@@ -376,6 +389,7 @@ export class RTShaderUtil{
     //完成函数输出
     static funcDefConcat(funcParam){
         let lst = [
+            [RTShaderUtil.funcDef_GammaCorrection,null],
             [RTShaderUtil.funcDef_RandNoiseV3,null],
             [RTShaderUtil.funcDef_DiffuseReflection,null],
             [RTShaderUtil.funcDef_InsidePlane,null],
