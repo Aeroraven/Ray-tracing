@@ -22,6 +22,6 @@ Use `npm run serve` to visualize the result via  http://localhost:1551
 - Ping-pong Scheme
 
   - https://en.wikipedia.org/wiki/Ping-pong_scheme
-
-  
+- Lambert's Model 
+  - https://en.wikipedia.org/wiki/Lambert%27s_cosine_law
 

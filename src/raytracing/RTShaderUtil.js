@@ -324,11 +324,14 @@ export class RTShaderUtil{
                         break;
                     }`+ambientSetting+
                     `
-                    accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                    
                     accMaterial = accMaterial * hit.materialColor;
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
+                        float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
                     }else if(hit.hitType==2){
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
                     }
                     
