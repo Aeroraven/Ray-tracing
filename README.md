@@ -17,7 +17,7 @@ A ray tracing demo using WebGL & ECMAScript2015(ES6)
 
 - glMatrix
 
-- glNoise
+- ~~webglNoise~~
 
   
 
@@ -26,12 +26,13 @@ A ray tracing demo using WebGL & ECMAScript2015(ES6)
 - Lights
 
   - RTAmbientLight 环境光照
-  - RTPointLight 点光源：就是点光源
+  - ~~RTPointLight 点光源：只能用来制造阴影~~
   - RTSkyLight 天空光照：在反射光线无法碰到物体时，使用天空光照定义的光线样式
 
 - Geometry
 
-  - RTPlane 平面
+  - ~~RTPlane 平面~~
+    - 这个有Bug
   - RTSphere 球体
 
   
@@ -47,7 +48,7 @@ A ray tracing demo using WebGL & ECMAScript2015(ES6)
   
 - Gamma Correction / Gamma 修正
 
-- Whitted's Ray Tracing Algorithm 
+- ~~Whitted's Ray Tracing Algorithm~~ 使用 Path Tracer 替代
 
   - https://courses.cs.washington.edu/courses/cse457/21au/assets/lectures/
 
