@@ -104,7 +104,7 @@ let light1 = new RTSphere(
     0.5,
     new RTMaterial(
         new Color(1,1,1,1.0),
-        new Color(1,1,1,1),
+        new Color(12,12,12,1),
         RTMaterial.DIFFUSE
     ),
     "light1"
@@ -115,14 +115,12 @@ let ground = new RTSphere(
     new Vec(0,-100,22),
     100,
     new RTMaterial(
-        new Color(0.75,0.75,0.55,1.0),
+        new Color(0.8,0.8,0.8,1.0),
         new Color(0,0,0,1),
         RTMaterial.DIFFUSE
     ),
     "ground"
 )
-
-
 
 let ambientLight = new RTAmbientLight(
     new Color(0.1,0.1,0.1,1.0)
@@ -135,16 +133,23 @@ let skyLight = new RTSkyLight(
 rtscene.attach(ground)
 rtscene.attach(sphere)
 rtscene.attach(sphere2)
-rtscene.attach(ambientLight)
-rtscene.attach(skyLight)
+//rtscene.attach(ambientLight)
+//rtscene.attach(skyLight)
 rtscene.attach(light1)
 
 rtscene.compile()
 rtscene.render()
 
+let states = 0
+let timeStart = Date.now()
 function render(){
+    states = states+1
     rtscene.render()
     sc.render(shader,cam,rtscene.getRenderOutput())
+    //if(states == 10){
+    //    window.alert("STOP"+( Date.now()-timeStart))
+    //   return 
+    //}
     requestAnimationFrame(render)
 }
 requestAnimationFrame(render)

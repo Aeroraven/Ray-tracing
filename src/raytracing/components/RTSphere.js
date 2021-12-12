@@ -42,17 +42,13 @@ export class RTSphere{
                 if(true){
                     sSphere sp = `+this.genObject()+`;
                     tc = fRaySphereIntersection(r,sp);
-                    if(tc>0.0){
-                        vec3 ip = fRayPoint(r,tc);
-                        if(tc<t){
-                            t=tc;
-                            norm = ip - `+this.name+'_VC'+`;
-                            emicolor = vec4(`+this.uEM+`);
-                            matcolor = vec4(`+this.uCL+`);
-                            hitType = `+this.material.tp+`;
-                            collided=true;
-                        }
-                        
+                    if(tc>0.0 && tc<t){
+                        t=tc;
+                        norm = fRayPoint(r,tc) - `+this.name+'_VC'+`;
+                        emicolor = vec4(`+this.uEM+`);
+                        matcolor = vec4(`+this.uCL+`);
+                        hitType = `+this.material.tp+`;
+                        collided=true;
                     }
                 }
         `

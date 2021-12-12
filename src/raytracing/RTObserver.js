@@ -6,7 +6,7 @@ import { RTShaderVariableMap } from "./RTShaderVariableMap";
 export class RTObserver{
     constructor(gl){
         this.cam = new Camera()
-        this.cam.setPerspective(45*Math.PI/180,gl.canvas.height/gl.canvas.width,0.1,100)
+        this.cam.setPerspective(55*Math.PI/180,gl.canvas.height/gl.canvas.width,0.1,100)
         this.cam.setCamPosition(new Vec(0,0,-6))
         this.cam.setCamUp(new Vec(0,1,0))
         this.cam.setCamCenter(new Vec(0,0,0))
