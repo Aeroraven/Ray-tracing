@@ -160,37 +160,18 @@ export class RTShaderUtil{
     //Function:RandNoiseV3 随机数
     static funcDef_RandNoiseV3(){
         return `
-            
             float rng()
             {
-                seeds += uvec2(22,22);
+                seeds += uvec2(1);
                 uvec2 q = 1103515245U * ( (seeds >> 1U) ^ (seeds.yx) );
                 uint  n = 1103515245U * ( (q.x) ^ (q.y >> 3U) );
                 return float(n) * (1.0 / float(0xffffffffU));
             }
-
-            float random(vec3 scale, float seed) {
-                return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) *  seed);
-            }
-            vec3 uniformlyRandomDirection(float seed) {
-                float z = 1.0 - 2.0 * random(vec3(12.9898, 78.233, 151.7182), seed);
-                float r = sqrt(1.0 - z * z);
-                float angle = 6.283185307179586 * random(vec3(63.7264, 10.873, 623.6736), seed);
-                return vec3(r * cos(angle), r * sin(angle), z);
-            }
-            vec3 uniformlyRandomDirectionNew(float seed) {
+            vec3 uniformlyRandomDirectionNew() {
                 float up = rng() * 2.0 - 1.0; 
                 float over = sqrt( max(0.0, 1.0 - up * up) );
                 float around = rng() * 6.28318530717;
                 return normalize(vec3(cos(around) * over, up, sin(around) * over));	
-            }
-            float rand(vec2 co){
-                return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-            }
-            float fRandNoiseV3(vec3 x){
-                float ret = rand(vec2(x.x+x.y+x.z,state));
-                state += ret;
-                return ret;
             }
         `
     }
@@ -203,7 +184,7 @@ export class RTShaderUtil{
                 if(dot(inr.direction,norm)>0.0){
                     n = -n;
                 }
-                vec3 o = uniformlyRandomDirectionNew(state);
+                vec3 o = uniformlyRandomDirectionNew();
                 if(dot(o,n)<0.0){
                     o = -o;
                 }
@@ -303,18 +284,19 @@ export class RTShaderUtil{
     static funcDef_Main(){
         return `
             void main(){
-                seeds = uvec2(float(uSamples), float(uSamples) + 2.0) * uvec2(gl_FragCoord);
-                float loopsf = 1.0/20.0;
-                float randsrng = 0.0001;
-                const int loops = 20;
+                
+                float loopsf = 60.0;
+                float randsrng = 0.00005;
+                const int loops = 60;
                 vec3 nray = ray / length(ray);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
                 for(int i=0;i<loops;i++){
-                    state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
-                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew(state) * randsrng));
+                    float px = float(uSamples)*loopsf+float(i);
+                    seeds = uvec2(px, px + 2.0) * uvec2(gl_FragCoord);
+                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng));
                 }
                 vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
-                fragc = fGammaCorrection(fragc*loopsf,0.45);
+                fragc = fGammaCorrection(fragc/loopsf,0.45);
                 fragmentColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
             }
         `
@@ -354,7 +336,6 @@ export class RTShaderUtil{
     //变量输出
     static globalVarDefConcat(){
         return `
-            float state = 12.2;
             uvec2 seeds = uvec2(1.0,1.0);
             in vec3 ray;
             in vec2 tex;

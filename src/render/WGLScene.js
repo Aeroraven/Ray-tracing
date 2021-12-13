@@ -113,6 +113,7 @@ export class WGLScene extends Scene{
         )
         gl.activeTexture(gl.TEXTURE0)
         if(texture!=null){
+            texture.disableMips()
             texture.start()
         }
         gl.uniform1i(shaderInfo.uniformLocations.usingTex,this.usingTex)

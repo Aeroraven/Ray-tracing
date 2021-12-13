@@ -60,21 +60,33 @@ let sphere = new RTSphere(
     new RTMaterial(
         new Color(0.8,0.8,0.8,1.0),
         new Color(0,0,0,1),
-        RTMaterial.DIFFUSE
+        RTMaterial.SPECULAR
     ),
     "sphere1"
 )
 
 let sphere2 = new RTSphere(
-    new Vec(-0.6,-0.6,7),
-    0.5,
+    new Vec(-0.6,-0.8,7),
+    0.3,
     new RTMaterial(
-        new Color(0.8,0.8,0.8,1.0),
+        new Color(1,1,1,1.0),
         new Color(0,0,0,1),
         RTMaterial.DIFFUSE
     ),
     "sphere2"
 )
+
+let light1 = new RTSphere(
+    new Vec(0.6,-0.8,7),
+    0.3,
+    new RTMaterial(
+        new Color(1,1,1,1.0),
+        new Color(5,5,5,1),
+        RTMaterial.DIFFUSE
+    ),
+    "light1"
+)
+
 
 let plane1 = new RTPlane(
     new Vec(-6,0,-6),
@@ -100,16 +112,6 @@ let plane2 = new RTPlane(
     "ground2"
 )
 
-let light1 = new RTSphere(
-    new Vec(0.6,-0.6,7),
-    0.5,
-    new RTMaterial(
-        new Color(1,1,1,1.0),
-        new Color(12,12,12,1),
-        RTMaterial.DIFFUSE
-    ),
-    "light1"
-)
 
 
 let ground = new RTSphere(
@@ -142,12 +144,29 @@ rtscene.compile()
 rtscene.render(true)
 
 let states = 0
+let dispSample = 0
 let timeStart = Date.now()
+let monitor = document.getElementById("sample")
+let dispmonitor = document.getElementById("sample641")
+let dispInterval = 5
+let disableAnimation = true
 function render(){
     states = states+1
-    document.getElementById("sample").innerHTML = "SAMPLES:"+states+", FPS:"+parseInt(states*1000/(Date.now()-timeStart))
+    monitor.innerHTML = "SAMPLES:"+states+", RenderFPS:"+parseInt(states*1000/(Date.now()-timeStart))
+    dispmonitor.innerHTML = " DisplayedFrames:"+dispSample+", DispFPS:"+parseInt(dispSample*1000/(Date.now()-timeStart))
     rtscene.render()
-    sc.render(shader,cam,rtscene.getRenderOutput())
-    requestAnimationFrame(render)
+    if(disableAnimation){
+        dispSample ++;
+        sc.render(shader,cam,rtscene.getRenderOutput())
+        requestAnimationFrame(render)
+    }else if(states%dispInterval==0){
+        rtscene.resetCounter()
+        rtscene.compile()
+        dispSample ++;
+        sphere2.vc.x = Math.sin(states*0.01)*0.5-0.7
+        sc.render(shader,cam,rtscene.getRenderOutput())
+    }
+        
+    
 }
 requestAnimationFrame(render)

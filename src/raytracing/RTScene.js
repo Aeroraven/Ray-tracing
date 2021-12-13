@@ -143,6 +143,9 @@ export class RTScene{
         let ret = RTShaderUtil.getFragmentShader(funcParam,this.shaderVar)
         return ret
     }
+    resetCounter(){
+        this.sampleCount = 0
+    }
     compile(){
         this.compiledShader = this.shader.getShaderProgram(this)
     }
@@ -165,9 +168,10 @@ export class RTScene{
         let gl = this.gl
         
         this.frameBuffer.bindTexturePingPong(gl.COLOR_ATTACHMENT0,this.renderOutput[0],this.renderOutput[1])
-        
         this.frameBuffer.start()
         this.renderOutput[0].start()
+        this.renderOutput[0].disableMips()
+        this.renderOutput[1].disableMips()
         gl.viewport(0,0,this.getRenderOutput().getW(),this.getRenderOutput().getH())
         gl.clearColor(0,0,0,1)
 
@@ -187,7 +191,6 @@ export class RTScene{
 
         gl.drawArrays(gl.TRIANGLE_STRIP,0,4)
         this.sampleCount++;
-
         this.renderOutput[0].end()
         this.frameBuffer.end()
         this.renderOutput.reverse()
