@@ -47,6 +47,7 @@ let sc = new WGLScene(gl)
 sc.addShape(ra)
 sc.usingTex = 1
 gl.enable(gl.DEPTH_TEST)
+gl.depthFunc(gl.LEQUAL)
 
 
 //Start Raytracing Render
@@ -138,18 +139,15 @@ rtscene.attach(sphere2)
 rtscene.attach(light1)
 
 rtscene.compile()
-rtscene.render()
+rtscene.render(true)
 
 let states = 0
 let timeStart = Date.now()
 function render(){
     states = states+1
+    document.getElementById("sample").innerHTML = "SAMPLES:"+states+", FPS:"+parseInt(states*1000/(Date.now()-timeStart))
     rtscene.render()
     sc.render(shader,cam,rtscene.getRenderOutput())
-    //if(states == 10){
-    //    window.alert("STOP"+( Date.now()-timeStart))
-    //   return 
-    //}
     requestAnimationFrame(render)
 }
 requestAnimationFrame(render)

@@ -150,10 +150,8 @@ export class RTShaderUtil{
                 if(dot(inr.direction,n)>0.0){
                     n = -n;
                 }
-                vec3 ix = inr.direction/dot(inr.direction,n);
-                vec3 ox = ix+2.0*n;
-                vec3 o = ox/length(ox);
-                sRay ret = sRay(p,o);
+                vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
+                sRay ret = sRay(p,ox/length(ox));
                 return ret;
             }
         `
@@ -290,9 +288,9 @@ export class RTShaderUtil{
     static funcDef_Main(){
         return `
             void main(){
-                float loopsf = 144.0;
-                float randsrng = 0.0004;
-                const int loops = 144;
+                float loopsf = 1.0/20.0;
+                float randsrng = 0.0001;
+                const int loops = 20;
                 vec3 nray = ray / length(ray);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
                 for(int i=0;i<loops;i++){
@@ -300,7 +298,7 @@ export class RTShaderUtil{
                     fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirection(state) * randsrng));
                 }
                 vec4 textc = texture2D(uTexture, vec2(1.0-tex.s,tex.t));
-                fragc = fGammaCorrection(fragc/loopsf,0.45);
+                fragc = fGammaCorrection(fragc*loopsf,0.45);
                 gl_FragColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
             }
         `

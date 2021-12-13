@@ -160,7 +160,7 @@ export class RTScene{
         this.frameBuffer.end()
 
     }
-    render(doClear = false){
+    render(firstRender=true,doClear = false){
         //Draw To Tex0 & Using Tex1 to Render
         let gl = this.gl
         
@@ -171,17 +171,19 @@ export class RTScene{
         gl.viewport(0,0,this.getRenderOutput().getW(),this.getRenderOutput().getH())
         gl.clearColor(0,0,0,1)
 
-        gl.useProgram(this.compiledShader)
-        this.shaderVar.bindShaderVarible(gl,this.compiledShader)
-        this.updateUniform()
-        this.loadAlternativeTexture()
-        gl.bindBuffer(gl.ARRAY_BUFFER,this.sheetcb)
-        gl.vertexAttribPointer(gl.getAttribLocation(this.compiledShader,'aVertexColor'),4,gl.FLOAT,false,0,0)
-        gl.enableVertexAttribArray(gl.getAttribLocation(this.compiledShader,'aVertexColor'))
+        if(firstRender){
+            gl.useProgram(this.compiledShader)
+            this.shaderVar.bindShaderVarible(gl,this.compiledShader)
+            this.updateUniform()
+            this.loadAlternativeTexture()
+            gl.bindBuffer(gl.ARRAY_BUFFER,this.sheetcb)
+            gl.vertexAttribPointer(gl.getAttribLocation(this.compiledShader,'aVertexColor'),4,gl.FLOAT,false,0,0)
+            gl.enableVertexAttribArray(gl.getAttribLocation(this.compiledShader,'aVertexColor'))
 
-        gl.bindBuffer(gl.ARRAY_BUFFER,this.sheetvb)
-        gl.vertexAttribPointer(gl.getAttribLocation(this.compiledShader,'aVertexPosition'),3,gl.FLOAT,false,0,0)
-        gl.enableVertexAttribArray(gl.getAttribLocation(this.compiledShader,'aVertexPosition'))
+            gl.bindBuffer(gl.ARRAY_BUFFER,this.sheetvb)
+            gl.vertexAttribPointer(gl.getAttribLocation(this.compiledShader,'aVertexPosition'),3,gl.FLOAT,false,0,0)
+            gl.enableVertexAttribArray(gl.getAttribLocation(this.compiledShader,'aVertexPosition'))
+        }
 
         gl.drawArrays(gl.TRIANGLE_STRIP,0,4)
         this.sampleCount++;
