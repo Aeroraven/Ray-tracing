@@ -1,6 +1,11 @@
-
-            precision highp float;
+#version 300 es
+            precision lowp float;
+            precision lowp int;
         
+uniform vec3 RTSphereground_VC;
+uniform float RTSphereground_RA;
+uniform vec4 RTSphereground_EM;
+uniform vec4 RTSphereground_CL;
 uniform vec3 RTSpheresphere1_VC;
 uniform float RTSpheresphere1_RA;
 uniform vec4 RTSpheresphere1_EM;
@@ -9,10 +14,10 @@ uniform vec3 RTSpheresphere2_VC;
 uniform float RTSpheresphere2_RA;
 uniform vec4 RTSpheresphere2_EM;
 uniform vec4 RTSpheresphere2_CL;
-uniform vec3 RTSpheresphere4_VC;
-uniform float RTSpheresphere4_RA;
-uniform vec4 RTSpheresphere4_EM;
-uniform vec4 RTSpheresphere4_CL;
+uniform vec3 RTSpherelight1_VC;
+uniform float RTSpherelight1_RA;
+uniform vec4 RTSpherelight1_EM;
+uniform vec4 RTSpherelight1_CL;
 uniform vec3 raylt;
 uniform vec3 raylb;
 uniform vec3 rayrb;
@@ -27,9 +32,8 @@ uniform int uSamples;
 uniform sampler2D uTexture;
 
             float state = 12.2;
-            varying highp vec3 ray;
-            varying highp vec4 color;
-            varying highp vec2 tex;
+            in vec3 ray;
+            in vec2 tex;
         
             struct sPlane{
                 vec3 x,y,z;
@@ -41,7 +45,6 @@ uniform sampler2D uTexture;
             struct sRay{
                 vec3 origin;
                 vec3 direction;
-                vec4 color;
             };
         
             struct sSphere{
@@ -65,88 +68,31 @@ uniform sampler2D uTexture;
                 return vec4(pow(col.x,g),pow(col.y,g),pow(col.z,g),pow(col.w,g));
             }
         
-            vec3 mod289(vec3 x) {
-                return x - floor(x * (1.0 / 289.0)) * 289.0;
-            }
-            
-            vec4 mod289(vec4 x) {
-                return x - floor(x * (1.0 / 289.0)) * 289.0;
-            }
-            
-            vec4 permute(vec4 x) {
-                return mod289(((x*34.0)+10.0)*x);
-            }
-            
-            vec4 taylorInvSqrt(vec4 r)
+            uvec2 seeds = uvec2(1);
+            float rng()
             {
-                return 1.79284291400159 - 0.85373472095314 * r;
+                seeds += uvec2(1);
+                    uvec2 q = 1103515245U * ( (seeds >> 1U) ^ (seeds.yx) );
+                    uint  n = 1103515245U * ( (q.x) ^ (q.y >> 3U) );
+                return float(n) * (1.0 / float(0xffffffffU));
             }
-            
-            float snoise(vec3 v)
-                { 
-                const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
-                const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
 
-                vec3 i  = floor(v + dot(v, C.yyy) );
-                vec3 x0 =   v - i + dot(i, C.xxx) ;
-            
-                vec3 g = step(x0.yzx, x0.xyz);
-                vec3 l = 1.0 - g;
-                vec3 i1 = min( g.xyz, l.zxy );
-                vec3 i2 = max( g.xyz, l.zxy );
-            
-                vec3 x1 = x0 - i1 + C.xxx;
-                vec3 x2 = x0 - i2 + C.yyy; 
-                vec3 x3 = x0 - D.yyy;      
-            
-                i = mod289(i); 
-                vec4 p = permute( permute( permute( 
-                        i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
-                        + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
-                        + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
-            
-                float n_ = 0.142857142857; // 1.0/7.0
-                vec3  ns = n_ * D.wyz - D.xzx;
-            
-                vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)
-            
-                vec4 x_ = floor(j * ns.z);
-                vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)
-            
-                vec4 x = x_ *ns.x + ns.yyyy;
-                vec4 y = y_ *ns.x + ns.yyyy;
-                vec4 h = 1.0 - abs(x) - abs(y);
-            
-                vec4 b0 = vec4( x.xy, y.xy );
-                vec4 b1 = vec4( x.zw, y.zw );
-            
-                vec4 s0 = floor(b0)*2.0 + 1.0;
-                vec4 s1 = floor(b1)*2.0 + 1.0;
-                vec4 sh = -step(h, vec4(0.0));
-            
-                vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
-                vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
-            
-                vec3 p0 = vec3(a0.xy,h.x);
-                vec3 p1 = vec3(a0.zw,h.y);
-                vec3 p2 = vec3(a1.xy,h.z);
-                vec3 p3 = vec3(a1.zw,h.w);
-            
-                vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
-                p0 *= norm.x;
-                p1 *= norm.y;
-                p2 *= norm.z;
-                p3 *= norm.w;
-            
-
-                vec4 m = max(0.5 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-                m = m * m;
-                return 105.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), 
-                                            dot(p2,x2), dot(p3,x3) ) );
+            float random(vec3 scale, float seed) {
+                return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) *  seed);
+            }
+            vec3 uniformlyRandomDirection() {
+                float up = rng() * 2.0 - 1.0; // range: -1 to +1
+                float over = sqrt( max(0.0, 1.0 - up * up) );
+                float around = rng() * 6.28318530717;
+                return normalize(vec3(cos(around) * over, up, sin(around) * over));	
+            }
+            float rand(vec2 co){
+                return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
             }
             float fRandNoiseV3(vec3 x){
-                state += snoise(x+vec3(state,state+144.13,151.49))+24.89;
-                return snoise(x+vec3(state+613.5,state+644.11,state+593.4));
+                float ret = rand(vec2(x.x+x.y+x.z,state));
+                state += ret;
+                return ret;
             }
         
             sRay fDiffuseReflection(sRay inr,vec3 p,vec3 norm){
@@ -155,18 +101,11 @@ uniform sampler2D uTexture;
                 if(dot(inr.direction,norm)>0.0){
                     n = -n;
                 }
-                float fx = fRandNoiseV3(vec3(n.y+state,n.x+state,n.z+state));
-                float fy = fRandNoiseV3(vec3(fx,state,fx));
-                float dx = sin(fx)*cos(fy);
-                float dy = sin(fx)*sin(fy);
-                float dz = cos(fy);
-                vec3 tp = vec3(dx,dy,dz)/length(vec3(dx,dy,dz));
-                vec3 newdir = tp;
-                if(dot(newdir,n)<0.0){
-                    newdir = -newdir;
+                vec3 o = uniformlyRandomDirection();
+                if(dot(o,n)<0.0){
+                    o = -o;
                 }
-                vec3 o = newdir / length(newdir);
-                sRay rt = sRay(p,o,inr.color);
+                sRay rt = sRay(p,o);
                 return rt;
             }
         
@@ -185,9 +124,7 @@ uniform sampler2D uTexture;
             }
         
             vec3 fPlaneNorm(sPlane p){
-                vec3 x = p.y-p.x;
-                vec3 y = p.z-p.y;
-                return cross(x,y);
+                return cross(p.y-p.x,p.z-p.y);
             }
         
             float fRayPlaneIntersection(sRay r,sPlane p){
@@ -195,18 +132,16 @@ uniform sampler2D uTexture;
                 vec3 di = r.direction;
                 vec3 or = r.origin;
                 vec3 a = p.y;
-                float rd = n.x*di.x+n.y*di.y+n.z*di.z;
+                float rd = dot(n,di);
                 float rn = n.x*(a.x-or.x)+n.y*(a.y-or.y)+n.z*(a.z-or.z);
                 return rn/rd;
             }
         
             float fRaySphereIntersection(sRay r,sSphere s){
                 vec3 p = r.origin-s.c;
-                vec3 d = r.direction;
-                float a = d.x*d.x+d.y*d.y+d.z*d.z;
-                float b = 2.0*(d.x*p.x+d.y*p.y+d.z*p.z);
-                float c = p.x*p.x+p.y*p.y+p.z*p.z-s.r*s.r;
-                float delta = b*b-4.0*a*c;
+                float a = dot(r.direction,r.direction);
+                float b = 2.0*(dot(r.direction,p));
+                float delta = b*b-4.0*a*(dot(p,p)-s.r*s.r);
                 if(delta<1e-10){
                     return -1.0;
                 }else{
@@ -228,31 +163,22 @@ uniform sampler2D uTexture;
             }
         
             vec3 fRayPoint(sRay ray,float t){
-                vec3 ret = ray.origin;
-                ret = ret + t * ray.direction;
-                return ret;
+                return  ray.origin+ t * ray.direction;
             }
         
-            sRay fSpecularReflection(sRay inr,vec3 p,vec3 norm){
-                vec3 n = norm;
-                n = n/length(n);
-                if(dot(inr.direction,norm)>0.0){
+            sRay fSpecularReflection(sRay inr,vec3 p,vec3 n){
+                if(dot(inr.direction,n)>0.0){
                     n = -n;
                 }
-                vec3 ix = inr.direction/dot(inr.direction,n);
-                vec3 ox = ix+2.0*n;
-                vec3 o = ox/length(ox);
-                sRay ret = sRay(p,o,inr.color);
+                vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
+                sRay ret = sRay(p,ox/length(ox));
                 return ret;
-
-
-
             }
         
             sRayCollisionResult fRayCollision(sRay r){
                 float t = 1e30;
                 vec3 norm = vec3(0.0,0.0,0.0);
-                vec4 emicolor = vec4(1.0,0.0,0.0,1.0);
+                vec4 emicolor = vec4(1.0,1.0,1.0,1.0);
                 vec4 matcolor = vec4(0.0,0.0,0.0,1.0);
                 bool collided = false;
                 float tc=1e30;
@@ -261,19 +187,29 @@ uniform sampler2D uTexture;
                 
 
                 if(true){
+                    sSphere sp = sSphere(RTSphereground_VC,RTSphereground_RA,RTSphereground_EM,RTSphereground_CL);
+                    tc = fRaySphereIntersection(r,sp);
+                    if(tc>0.0 && tc<t){
+                        t=tc;
+                        norm = fRayPoint(r,tc) - RTSphereground_VC;
+                        emicolor = vec4(RTSphereground_EM);
+                        matcolor = vec4(RTSphereground_CL);
+                        hitType = 1;
+                        collided=true;
+                    }
+                }
+        
+
+                if(true){
                     sSphere sp = sSphere(RTSpheresphere1_VC,RTSpheresphere1_RA,RTSpheresphere1_EM,RTSpheresphere1_CL);
                     tc = fRaySphereIntersection(r,sp);
-                    if(tc>0.0){
-                        vec3 ip = fRayPoint(r,tc);
-                        if(tc<t){
-                            t=tc;
-                            norm = ip - RTSpheresphere1_VC;
-                            emicolor = vec4(RTSpheresphere1_EM);
-                            matcolor = vec4(RTSpheresphere1_CL);
-                            hitType = 1;
-                            collided=true;
-                        }
-                        
+                    if(tc>0.0 && tc<t){
+                        t=tc;
+                        norm = fRayPoint(r,tc) - RTSpheresphere1_VC;
+                        emicolor = vec4(RTSpheresphere1_EM);
+                        matcolor = vec4(RTSpheresphere1_CL);
+                        hitType = 1;
+                        collided=true;
                     }
                 }
         
@@ -281,35 +217,27 @@ uniform sampler2D uTexture;
                 if(true){
                     sSphere sp = sSphere(RTSpheresphere2_VC,RTSpheresphere2_RA,RTSpheresphere2_EM,RTSpheresphere2_CL);
                     tc = fRaySphereIntersection(r,sp);
-                    if(tc>0.0){
-                        vec3 ip = fRayPoint(r,tc);
-                        if(tc<t){
-                            t=tc;
-                            norm = ip - RTSpheresphere2_VC;
-                            emicolor = vec4(RTSpheresphere2_EM);
-                            matcolor = vec4(RTSpheresphere2_CL);
-                            hitType = 1;
-                            collided=true;
-                        }
-                        
+                    if(tc>0.0 && tc<t){
+                        t=tc;
+                        norm = fRayPoint(r,tc) - RTSpheresphere2_VC;
+                        emicolor = vec4(RTSpheresphere2_EM);
+                        matcolor = vec4(RTSpheresphere2_CL);
+                        hitType = 1;
+                        collided=true;
                     }
                 }
         
 
                 if(true){
-                    sSphere sp = sSphere(RTSpheresphere4_VC,RTSpheresphere4_RA,RTSpheresphere4_EM,RTSpheresphere4_CL);
+                    sSphere sp = sSphere(RTSpherelight1_VC,RTSpherelight1_RA,RTSpherelight1_EM,RTSpherelight1_CL);
                     tc = fRaySphereIntersection(r,sp);
-                    if(tc>0.0){
-                        vec3 ip = fRayPoint(r,tc);
-                        if(tc<t){
-                            t=tc;
-                            norm = ip - RTSpheresphere4_VC;
-                            emicolor = vec4(RTSpheresphere4_EM);
-                            matcolor = vec4(RTSpheresphere4_CL);
-                            hitType = 1;
-                            collided=true;
-                        }
-                        
+                    if(tc>0.0 && tc<t){
+                        t=tc;
+                        norm = fRayPoint(r,tc) - RTSpherelight1_VC;
+                        emicolor = vec4(RTSpherelight1_EM);
+                        matcolor = vec4(RTSpherelight1_CL);
+                        hitType = 1;
+                        collided=true;
                     }
                 }
         
@@ -339,7 +267,7 @@ uniform sampler2D uTexture;
             vec4 fRaytracing(sRay r){
                 sRay rp = r;
                 vec4 accColor = vec4(0.0,0.0,0.0,1.0);
-                vec4 accMaterial = vec4(0.99,0.99,0.99,1.0);
+                vec4 accMaterial = vec4(1.0,1.0,1.0,1.0);
                 vec4 ambient = vec4(0.0,0.0,0.0,1.0);
                 vec4 skylight = vec4(0.0,0.0,0.0,1.0);
                 
@@ -347,51 +275,41 @@ uniform sampler2D uTexture;
         
         skylight = vec4(RTSkyLightundefined_CL);
         
-                for(int i=1;i < 25;i+=1){
+                for(int i=1;i < 30;i+=1){
+                    rp.direction = rp.direction / length(rp.direction);
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
                         accColor = accColor + accMaterial * skylight; 
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
-                    float shadowIntensity = fShadowTests(hit.colvex);
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
-                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert * lambert;
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
                     }else if(hit.hitType==2){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
+                    }
+                    if(i>5&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
+                        break;
                     }
                 }
                 return accColor;
             }
         
             void main(){
-                state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
-                float loopsf = 1.0;
-                float randsrng = 0.0005;
-                const int loops = 1;
-
+                float loopsf = 1.0/20.0;
+                float randsrng = 0.0001;
+                const int loops = 20;
                 vec3 nray = ray / length(ray);
-                vec3 rnd = vec3(1.14+state,5.14+state,1.91+state+uTime);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
                 for(int i=0;i<loops;i++){
-                    float r1 = fRandNoiseV3(rnd);
-                    rnd = vec3(rnd.y,rnd.z,r1);
-                    float r2 = fRandNoiseV3(rnd);
-                    rnd = vec3(rnd.y,rnd.z,r2);
-                    float r3 = fRandNoiseV3(rnd);
-                    rnd = vec3(rnd.y,rnd.z,r3);
-                    nray = nray + rnd * randsrng;
-                    nray = nray / length(nray);
-
-                    sRay r = sRay(eye,nray,vec4(0.0,0.0,0.0,0.0));
-                    fragc = fRaytracing(r)/loopsf + fragc;
+                    state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
+                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirection() * randsrng));
                 }
-                vec4 textc = texture2D(uTexture, vec2(1.0-tex.s,tex.t));
-                fragc = vec4(min(fragc.x,1.0),min(fragc.y,1.0),min(fragc.z,1.0),1.0);
-                fragc = fGammaCorrection(fragc,0.62);
+                vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
+                fragc = fGammaCorrection(fragc*loopsf,0.45);
                 gl_FragColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
             }
         

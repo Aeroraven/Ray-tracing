@@ -65,8 +65,6 @@ export class WGLScene extends Scene{
         let gl = this.gl
         gl.clearColor(0,0,0,1)
         gl.clearDepth(1)
-        gl.enable(gl.DEPTH_TEST)
-        gl.depthFunc(gl.LEQUAL)
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
         gl.viewport(0,0,this.gl.canvas.width,this.gl.canvas.height)
         this.renderInternal(shaderInfo,camera,texture)

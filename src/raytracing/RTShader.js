@@ -13,10 +13,10 @@ export class RTShader extends ShaderBase{
         return this.fragmentShader
     }
     getVertexShader(){
-        this.vertexShader=`
-        attribute vec4 aVertexPosition;
-        attribute vec4 aVertexColor;
-        attribute vec2 aVertexTex;
+        this.vertexShader=`#version 300 es
+        in vec4 aVertexPosition;
+        in vec4 aVertexColor;
+        in vec2 aVertexTex;
 
         uniform mat4 uModelViewMatrix;
         uniform mat4 uProjectionMatrix;
@@ -25,9 +25,9 @@ export class RTShader extends ShaderBase{
         uniform vec3 rayrb;
         uniform vec3 rayrt;
 
-        varying highp vec3 ray;
-        varying highp vec4 color;
-        varying highp vec2 tex;
+        out highp vec3 ray;
+        out highp vec4 color;
+        out highp vec2 tex;
         void main() {
             float yp = aVertexPosition.y*0.5+0.5;
             gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;

@@ -3,7 +3,7 @@
 export class WGLContextHelper{
     constructor(canvasID){
         let dom = document.getElementById(canvasID)
-        this.context = dom.getContext("webgl");
+        this.context = dom.getContext("webgl2");
         if(!this.context){
             window.alert("[CGProject] WGL is not supported!")
             return;
