@@ -7,6 +7,7 @@ export class RTShaderUtil{
             struct sRay{
                 vec3 origin;
                 vec3 direction;
+                float inrefra;
             };
         `
     }
@@ -162,14 +163,14 @@ export class RTShaderUtil{
     // judgeRefract函数注解：
     // vec3 p:入射点
     // vec3 N:入射点法线
-    // double NiOverNt:折射率
+    // float NiOverNt:折射率
     // sRay 射入光线
     static funcDef_tellRefract(){
         return `
-            Boolean judgeRefract(sRay inr,vec3 p,vec3 N,double NiOverNt){
+            Boolean judgeRefract(sRay inr,vec3 p,vec3 N,float NiOverNt){
                 vec3 UV= p/dist(p);
-                double Dt=dot(UV,N);
-                double Discriminant=1.0-NiOverNt*NiOverNt*(1-Dt*Dt);
+                float Dt=dot(UV,N);
+                float Discriminant=1.0-NiOverNt*NiOverNt*(1-Dt*Dt);
                 
                 if(Discriminant>0){
                     return true;
@@ -182,10 +183,10 @@ export class RTShaderUtil{
 
     static funcDef_calRefract(){
         return `
-            sRay calRefract(sRay inr,vec3 p,vec3 N,double NiOverNt){
+            sRay calRefract(sRay inr,vec3 p,vec3 N,float NiOverNt){
                 vec3 UV= p/dist(p);
-                double Dt=dot(UV,N);
-                double Discriminant=1.0-NiOverNt*NiOverNt*(1-Dt*Dt);
+                float Dt=dot(UV,N);
+                float Discriminant=1.0-NiOverNt*NiOverNt*(1-Dt*Dt);
                 
                 refta_direction=NiOverNt*(UV-N*Dt)-N*sqrt(Discriminant);
                 sRay addrefra=sRay(p, refta_direction);
@@ -197,7 +198,7 @@ export class RTShaderUtil{
     // 菲涅耳近似公式
     static funcDef_Schlick(){
         return `
-            double calSchlick(cos,f0){
+            float calSchlick(cos,f0){
                 return f0+(1-f0)*(1-cos)*(1-cos)*(1-cos)*(1-cos)*(1-cos);
             }
         `
@@ -313,13 +314,14 @@ export class RTShaderUtil{
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
+                    float NiOverNt= rp.inrefra/1.00029
             
-                    judge_refract=judgeRefract(r,hit.colvex,hit.colnorm,NiOverNt);
-                    if(judge_refract==true){
-                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
-                        rp = calRefract(r,hit.colvex,hit.colnorm,NiOverNt);
-                        continue;
-                    }
+                    // judge_refract=judgeRefract(rp,hit.colvex,hit.colnorm,NiOverNt);
+                    // if(judge_refract==true){
+                    //     accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                    //     rp = calRefract(r,hit.colvex,hit.colnorm,NiOverNt);
+                    //     continue;
+                    // }
 
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
