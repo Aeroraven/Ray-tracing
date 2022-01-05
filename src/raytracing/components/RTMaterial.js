@@ -24,3 +24,4 @@ export class RTMaterial{
 }
 RTMaterial.DIFFUSE = 1
 RTMaterial.SPECULAR = 2
+RTMaterial.REFRACTION = 3

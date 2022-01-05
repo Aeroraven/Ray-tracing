@@ -57,7 +57,7 @@ export class RTShaderVariableMap{
                 gl.bindTexture(gl.TEXTURE_2D,e.ext)
                 gl.uniform1i(u,e.initValue)
             }
-            
+            //console.log(this.shaderVar)
         }
     }
 }

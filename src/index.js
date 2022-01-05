@@ -60,18 +60,19 @@ let sphere = new RTSphere(
     new RTMaterial(
         new Color(0.8,0.8,0.8,1.0),
         new Color(0,0,0,1),
-        RTMaterial.SPECULAR
+        RTMaterial.DIFFUSE
     ),
     "sphere1"
 )
 
 let sphere2 = new RTSphere(
-    new Vec(-0.6,-0.8,7),
+    new Vec(-0.3,-0.8,7),
     0.3,
     new RTMaterial(
         new Color(1,1,1,1.0),
         new Color(0,0,0,1),
-        RTMaterial.DIFFUSE
+        RTMaterial.REFRACTION,
+        1.0
     ),
     "sphere2"
 )
@@ -126,7 +127,7 @@ let ground = new RTSphere(
 )
 
 let ambientLight = new RTAmbientLight(
-    new Color(0.1,0.1,0.1,1.0)
+    new Color(0.01,0.01,0.01,1.0)
 )
 
 let skyLight = new RTSkyLight(

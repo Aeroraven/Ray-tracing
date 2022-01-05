@@ -5,18 +5,22 @@
 uniform vec3 RTSphereground_VC;
 uniform float RTSphereground_RA;
 uniform vec4 RTSphereground_EM;
+uniform float RTSphereground_RF;
 uniform vec4 RTSphereground_CL;
 uniform vec3 RTSpheresphere1_VC;
 uniform float RTSpheresphere1_RA;
 uniform vec4 RTSpheresphere1_EM;
+uniform float RTSpheresphere1_RF;
 uniform vec4 RTSpheresphere1_CL;
 uniform vec3 RTSpheresphere2_VC;
 uniform float RTSpheresphere2_RA;
 uniform vec4 RTSpheresphere2_EM;
+uniform float RTSpheresphere2_RF;
 uniform vec4 RTSpheresphere2_CL;
 uniform vec3 RTSpherelight1_VC;
 uniform float RTSpherelight1_RA;
 uniform vec4 RTSpherelight1_EM;
+uniform float RTSpherelight1_RF;
 uniform vec4 RTSpherelight1_CL;
 uniform vec3 raylt;
 uniform vec3 raylb;
@@ -31,9 +35,10 @@ uniform float uTime;
 uniform int uSamples;
 uniform sampler2D uTexture;
 
-            float state = 12.2;
+            uvec2 seeds = uvec2(1.0,1.0);
             in vec3 ray;
             in vec2 tex;
+            out vec4 fragmentColor;
         
             struct sPlane{
                 vec3 x,y,z;
@@ -45,6 +50,7 @@ uniform sampler2D uTexture;
             struct sRay{
                 vec3 origin;
                 vec3 direction;
+                float inrefra;
             };
         
             struct sSphere{
@@ -68,31 +74,18 @@ uniform sampler2D uTexture;
                 return vec4(pow(col.x,g),pow(col.y,g),pow(col.z,g),pow(col.w,g));
             }
         
-            uvec2 seeds = uvec2(1);
             float rng()
             {
                 seeds += uvec2(1);
-                    uvec2 q = 1103515245U * ( (seeds >> 1U) ^ (seeds.yx) );
-                    uint  n = 1103515245U * ( (q.x) ^ (q.y >> 3U) );
+                uvec2 q = 1103515245U * ( (seeds >> 1U) ^ (seeds.yx) );
+                uint  n = 1103515245U * ( (q.x) ^ (q.y >> 3U) );
                 return float(n) * (1.0 / float(0xffffffffU));
             }
-
-            float random(vec3 scale, float seed) {
-                return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) *  seed);
-            }
-            vec3 uniformlyRandomDirection() {
-                float up = rng() * 2.0 - 1.0; // range: -1 to +1
+            vec3 uniformlyRandomDirectionNew() {
+                float up = rng() * 2.0 - 1.0; 
                 float over = sqrt( max(0.0, 1.0 - up * up) );
                 float around = rng() * 6.28318530717;
                 return normalize(vec3(cos(around) * over, up, sin(around) * over));	
-            }
-            float rand(vec2 co){
-                return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-            }
-            float fRandNoiseV3(vec3 x){
-                float ret = rand(vec2(x.x+x.y+x.z,state));
-                state += ret;
-                return ret;
             }
         
             sRay fDiffuseReflection(sRay inr,vec3 p,vec3 norm){
@@ -101,11 +94,11 @@ uniform sampler2D uTexture;
                 if(dot(inr.direction,norm)>0.0){
                     n = -n;
                 }
-                vec3 o = uniformlyRandomDirection();
+                vec3 o = uniformlyRandomDirectionNew();
                 if(dot(o,n)<0.0){
                     o = -o;
                 }
-                sRay rt = sRay(p,o);
+                sRay rt = sRay(p,o,inr.inrefra);
                 return rt;
             }
         
@@ -125,6 +118,33 @@ uniform sampler2D uTexture;
         
             vec3 fPlaneNorm(sPlane p){
                 return cross(p.y-p.x,p.z-p.y);
+            }
+        
+            sRay calRefract(sRay inr,vec3 p,vec3 N,float NiOverNt){
+                vec3 UV= inr.direction/length(inr.direction);
+                N = N/length(N);
+                float Dt=dot(UV,N);
+                float Discriminant=1.0-NiOverNt*NiOverNt*(1.0-Dt*Dt);
+                vec3 refta_direction=NiOverNt*(UV-N*Dt)-N*sqrt(Discriminant);
+                sRay addrefra=sRay(p, refta_direction, 1.0);
+                if(Dt>0){
+                    addrefra.inrefra = 1.0;
+                }else{
+                    addrefra.inrefra = NiOverNt;
+                }
+                return addrefra;
+            }
+        
+            bool judgeRefract(sRay inr,vec3 p,vec3 N,float NiOverNt){
+                vec3 UV= inr.direction/length(inr.direction);
+                float Dt=dot(UV,N);
+                N = N/length(N);
+                float Discriminant=1.0-NiOverNt*NiOverNt*(1.0-Dt*Dt);
+                if(Discriminant>0.0){
+                    return true;
+                }
+                else
+                  return false;
             }
         
             float fRayPlaneIntersection(sRay r,sPlane p){
@@ -171,7 +191,7 @@ uniform sampler2D uTexture;
                     n = -n;
                 }
                 vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
-                sRay ret = sRay(p,ox/length(ox));
+                sRay ret = sRay(p,ox/length(ox),inr.inrefra);
                 return ret;
             }
         
@@ -208,7 +228,7 @@ uniform sampler2D uTexture;
                         norm = fRayPoint(r,tc) - RTSpheresphere1_VC;
                         emicolor = vec4(RTSpheresphere1_EM);
                         matcolor = vec4(RTSpheresphere1_CL);
-                        hitType = 1;
+                        hitType = 2;
                         collided=true;
                     }
                 }
@@ -251,7 +271,7 @@ uniform sampler2D uTexture;
                 vec3 s = cp;
                 d = d/length(d);
                 s = s + d*0.01;
-                sRay r = sRay(s,d);
+                sRay r = sRay(s,d,1.0);
                 if(fRayCollision(r).collided){
                     return true;
                 }
@@ -283,6 +303,15 @@ uniform sampler2D uTexture;
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
+                    float NiOverNt= rp.inrefra/1.00029;
+            
+                    bool judge_refract=judgeRefract(rp,hit.colvex,hit.colnorm,NiOverNt);
+                    if(judge_refract==true){
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                        rp = calRefract(r,hit.colvex,hit.colnorm,NiOverNt);
+                        continue;
+                    }
+
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
@@ -299,17 +328,19 @@ uniform sampler2D uTexture;
             }
         
             void main(){
-                float loopsf = 1.0/20.0;
-                float randsrng = 0.0001;
-                const int loops = 20;
+                
+                float loopsf = 60.0;
+                float randsrng = 0.00005;
+                const int loops = 60;
                 vec3 nray = ray / length(ray);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
                 for(int i=0;i<loops;i++){
-                    state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
-                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirection() * randsrng));
+                    float px = float(uSamples)*loopsf+float(i);
+                    seeds = uvec2(px, px + 2.0) * uvec2(gl_FragCoord);
+                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng));
                 }
                 vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
-                fragc = fGammaCorrection(fragc*loopsf,0.45);
-                gl_FragColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
+                fragc = fGammaCorrection(fragc/loopsf,0.45);
+                fragmentColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
             }
         

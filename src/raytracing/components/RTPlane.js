@@ -22,6 +22,7 @@ export class RTPlane{
         }
         this.uEM = this.name+"_EM"
         this.uCL = this.name+"_CL"
+        this.uRF = this.name+"_RF"
     }
     updateMap(shaderVarMap){
         let mp = shaderVarMap
@@ -51,6 +52,7 @@ export class RTPlane{
                                 emicolor = vec4(`+this.uEM+`);
                                 matcolor = vec4(`+this.uCL+`);
                                 hitType = `+this.material.tp+`;
+                                refra = `+this.uRF+`;
                                 collided=true;
                             }
                         }

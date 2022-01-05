@@ -139,7 +139,7 @@ export class RTScene{
             ambientSetting:amb,
             pointlight:spl
         }
-
+        console.log(this.shaderVar)
         let ret = RTShaderUtil.getFragmentShader(funcParam,this.shaderVar)
         return ret
     }

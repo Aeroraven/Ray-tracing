@@ -44,6 +44,7 @@ export class RTShaderUtil{
                 vec4 emissionColor;
                 vec4 materialColor;
                 int hitType;
+                float refra;
             };
         `
     }
@@ -187,6 +188,9 @@ export class RTShaderUtil{
                 vec3 UV= inr.direction/length(inr.direction);
                 N = N/length(N);
                 float Dt=dot(UV,N);
+                if(Dt>0.0){
+                    NiOverNt = 1.0/NiOverNt;
+                }
                 float Discriminant=1.0-NiOverNt*NiOverNt*(1.0-Dt*Dt);
                 vec3 refta_direction=NiOverNt*(UV-N*Dt)-N*sqrt(Discriminant);
                 sRay addrefra=sRay(p, refta_direction, 1.0);
@@ -256,11 +260,12 @@ export class RTShaderUtil{
                 vec4 matcolor = vec4(0.0,0.0,0.0,1.0);
                 bool collided = false;
                 float tc=1e30;
+                float refra = 1.0;
                 int hitType = 0;
                 bool colc = false;
                 `+objects+`
                 vec3 colp = fRayPoint(r,t);
-                sRayCollisionResult ret = sRayCollisionResult(colp,norm,collided,emicolor,matcolor,hitType);
+                sRayCollisionResult ret = sRayCollisionResult(colp,norm,collided,emicolor,matcolor,hitType,refra);
                 return ret;
             }
         `
@@ -319,7 +324,7 @@ export class RTShaderUtil{
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
-                    float NiOverNt= rp.inrefra/1.00029;
+                    float NiOverNt= rp.inrefra;
             
                     //bool judge_refract=judgeRefract(rp,hit.colvex,hit.colnorm,NiOverNt);
                     bool judge_refract=false;
@@ -338,7 +343,7 @@ export class RTShaderUtil{
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
                     }else if(hit.hitType==3){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
-                        rp = calRefract(r,hit.colvex,hit.colnorm,NiOverNt);
+                        rp = calRefract(r,hit.colvex,hit.colnorm,rp.inrefra/hit.refra);
                         continue;
                     }
 
