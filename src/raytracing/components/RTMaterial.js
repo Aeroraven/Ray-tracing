@@ -26,3 +26,5 @@ RTMaterial.ABSORBED = 0
 RTMaterial.DIFFUSE = 1
 RTMaterial.SPECULAR = 2
 RTMaterial.REFRACTION = 3
+RTMaterial.METAL = 4
+RTMaterial.MOSSY = 5

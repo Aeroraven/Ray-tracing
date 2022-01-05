@@ -150,6 +150,7 @@ export class RTScene{
     updateUniform(){
         this.shaderVar.insert('uTime',new Date().getTime()-this.startTimestamp,RTShaderVariableMap.FLOAT)
         this.shaderVar.insert('uSamples',this.sampleCount,RTShaderVariableMap.INT)
+        this.observer.prepareShaderMap(this.shaderVar)
     }
     clear(){
         this.frameBuffer.start()

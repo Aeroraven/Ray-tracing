@@ -7,10 +7,19 @@
     <body bgcolor="black">
         <canvas id="webgl_displayer" height="600" width="600"></canvas>
         <div>
+            <b style="color:#fff">Statistics</b><br/>
             <a id="sample" style="color:#fff">Hello world </a><br/>
             <a id="sample641" style="color:#fff">Hello world </a>
+        </div><br/>
+        <div>
+            <b style="color:#fff">Control Panel</b><br/>
+            <button onclick="window.rtRotateUp()">Rotate Up</button>
+            <button onclick="window.rtRotateDown()">Rotate Right</button>
+            <button onclick="window.rtMoveLeft()">Move Left</button>
+            <button onclick="window.rtMoveRight()">Move Right</button>
+            <button onclick="window.rtGoFar()">Go Near</button>
+            <button onclick="window.rtGoNear()">Go Far</button>
         </div>
-        
     </body>
 </html>
 <script src="bundle.js"></script>

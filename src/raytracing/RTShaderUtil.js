@@ -145,19 +145,6 @@ export class RTShaderUtil{
         `
     }
 
-    //Function:SpecularReflection 镜面反射
-    static funcDef_SpecularReflection(){
-        return `
-            sRay fSpecularReflection(sRay inr,vec3 p,vec3 n){
-                if(dot(inr.direction,n)>0.0){
-                    n = -n;
-                }
-                vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
-                sRay ret = sRay(p,ox/length(ox),inr.inrefra);
-                return ret;
-            }
-        `
-    }
 
     // 折射dch
     // sRay inr:入射光线
@@ -244,6 +231,20 @@ export class RTShaderUtil{
             }
         `
     }
+    
+    //Function:SpecularReflection 镜面反射
+    static funcDef_SpecularReflection(){
+        return `
+            sRay fSpecularReflection(sRay inr,vec3 p,vec3 n){
+                if(dot(inr.direction,n)>0.0){
+                    n = -n;
+                }
+                vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
+                sRay ret = sRay(p,ox/length(ox),inr.inrefra);
+                return ret;
+            }
+        `
+    }
     //Function:DiffuseReflection 漫反射
     static funcDef_DiffuseReflection(){
         return `
@@ -258,6 +259,26 @@ export class RTShaderUtil{
                     o = -o;
                 }
                 sRay rt = sRay(p,o,inr.inrefra);
+                return rt;
+            }
+        `
+    }
+
+    static funcDef_GlsryReflection(){
+        return `
+            sRay fGlsryReflection(sRay inr,vec3 p,vec3 norm){
+                vec3 n = norm;
+                n = n / length(n);
+                if(dot(inr.direction,norm)>0.0){
+                    n = -n;
+                }
+                vec3 o = uniformlyRandomDirectionNew();
+                if(dot(o,n)<0.0){
+                    o = -o;
+                }
+                vec3 ox = (inr.direction/dot(inr.direction,n)+2.0*n)+o;
+                ox = ox/length(ox);
+                sRay rt = sRay(p,ox,inr.inrefra);
                 return rt;
             }
         `
@@ -336,19 +357,24 @@ export class RTShaderUtil{
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
+                    float rndsample = rng();
 
-                    if(hit.hitType==1){
+                    if(hit.hitType==1 || (rndsample<0.3&&hit.hitType==5)){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
-                    }else if(hit.hitType==2){
+                    }else if(hit.hitType==2 ){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
-                    }else if(hit.hitType==3){
+                    }else if(hit.hitType==3 || (hit.hitType==5)){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp=calRefract(rp,hit.colvex,hit.colnorm,hit.refra);
                     }else if(hit.hitType==0){
                         return accColor;
+                    }else if(hit.hitType==4){
+                        rp = fGlsryReflection(rp,hit.colvex,hit.colnorm);
+                        float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
                     }
                     rp.origin = rp.origin + rp.direction*0.002;
                     if(i>3&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
@@ -390,6 +416,7 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_PlaneNorm,null],
             [RTShaderUtil.funcDef_calRefract,null],
             [RTShaderUtil.funcDef_tellRefract,null],
+            [RTShaderUtil.funcDef_GlsryReflection,null],
             [RTShaderUtil.funcDef_RayPlaneIntersection,null],
             [RTShaderUtil.funcDef_RaySphereIntersection,null],
             [RTShaderUtil.funcDef_RayPoint,null],
