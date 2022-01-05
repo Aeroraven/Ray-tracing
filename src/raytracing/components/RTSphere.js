@@ -29,6 +29,7 @@ export class RTSphere{
         shaderVarMap.insert(this.name+"_RA",this.ra,RTShaderVariableMap.FLOAT)
 
         shaderVarMap.insert(this.name+"_EM",this.material.em.getGLMatVec4(),RTShaderVariableMap.VEC4)
+        shaderVarMap.insert(this.name+"_RF",this.material.rf,RTShaderVariableMap.FLOAT)
         shaderVarMap.insert(this.name+"_CL",this.material.cl.getGLMatVec4(),RTShaderVariableMap.VEC4)
     }
     genObject(){

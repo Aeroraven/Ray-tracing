@@ -170,8 +170,6 @@ export class RTScene{
         this.frameBuffer.bindTexturePingPong(gl.COLOR_ATTACHMENT0,this.renderOutput[0],this.renderOutput[1])
         this.frameBuffer.start()
         this.renderOutput[0].start()
-        this.renderOutput[0].disableMips()
-        this.renderOutput[1].disableMips()
         gl.viewport(0,0,this.getRenderOutput().getW(),this.getRenderOutput().getH())
         gl.clearColor(0,0,0,1)
 

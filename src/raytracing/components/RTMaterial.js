@@ -3,10 +3,11 @@
 import { Color } from "../../core/Color"
 
 export class RTMaterial{
-    constructor(color,emission,type){
+    constructor(color,emission,type,refra){
         this.cl = new Color(1,1,1,1)
         this.em = new Color(1,1,1,1)
         this.tp = RTMaterial.DIFFUSE
+        this.rf = 1
         if(color!=null){
             this.cl = color
         }
@@ -15,6 +16,9 @@ export class RTMaterial{
         }
         if(type!=null){
             this.tp = type
+        }
+        if(refra!=null){
+            this.rf = refra
         }
     }
 }

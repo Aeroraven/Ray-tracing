@@ -157,6 +157,53 @@ export class RTShaderUtil{
         `
     }
 
+    // 折射dch
+    // sRay inr:入射光线
+    // judgeRefract函数注解：
+    // vec3 p:入射点
+    // vec3 N:入射点法线
+    // double NiOverNt:折射率
+    // sRay 射入光线
+    static funcDef_tellRefract(){
+        return `
+            Boolean judgeRefract(sRay inr,vec3 p,vec3 N,double NiOverNt){
+                vec3 UV= p/dist(p);
+                double Dt=dot(UV,N);
+                double Discriminant=1.0-NiOverNt*NiOverNt*(1-Dt*Dt);
+                
+                if(Discriminant>0){
+                    return true;
+                }
+                else
+                  return false;
+            }
+        `
+    }
+
+    static funcDef_calRefract(){
+        return `
+            sRay calRefract(sRay inr,vec3 p,vec3 N,double NiOverNt){
+                vec3 UV= p/dist(p);
+                double Dt=dot(UV,N);
+                double Discriminant=1.0-NiOverNt*NiOverNt*(1-Dt*Dt);
+                
+                refta_direction=NiOverNt*(UV-N*Dt)-N*sqrt(Discriminant);
+                sRay addrefra=sRay(p, refta_direction);
+                return addrefra;
+            }
+        `
+    }
+
+    // 菲涅耳近似公式
+    static funcDef_Schlick(){
+        return `
+            double calSchlick(cos,f0){
+                return f0+(1-f0)*(1-cos)*(1-cos)*(1-cos)*(1-cos)*(1-cos);
+            }
+        `
+    }
+
+
     //Function:RandNoiseV3 随机数
     static funcDef_RandNoiseV3(){
         return `
@@ -246,6 +293,8 @@ export class RTShaderUtil{
         `
     }
 
+    
+
     //Function:Raytracing 光线追踪
     static funcDef_Raytracing(ambientSetting){
         return `
@@ -264,6 +313,14 @@ export class RTShaderUtil{
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
+            
+                    judge_refract=judgeRefract(r,hit.colvex,hit.colnorm,NiOverNt);
+                    if(judge_refract==true){
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                        rp = calRefract(r,hit.colvex,hit.colnorm,NiOverNt);
+                        continue;
+                    }
+
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
