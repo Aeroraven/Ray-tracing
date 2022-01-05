@@ -13,6 +13,7 @@ import { RTAmbientLight } from "./raytracing/components/RTAmbientLight";
 import { RTSkyLight } from "./raytracing/components/RTSkyLight";
 import { RTPointLight } from "./raytracing/components/RTPointLight";
 import { RTPlane } from "./raytracing/components/RTPlane";
+import { RTTetrahedron } from "./raytracing/components/RTTetrahedron";
 
 
 //Preparing Canvas
@@ -48,6 +49,7 @@ sc.addShape(ra)
 sc.usingTex = 1
 gl.enable(gl.DEPTH_TEST)
 gl.depthFunc(gl.LEQUAL)
+
 
 
 //Start Raytracing Render
@@ -117,6 +119,44 @@ let sphere5 = new RTSphere(
     ),
     "sphere5"
 )
+
+let sphere6 = new RTSphere(
+    new Vec(-0.65,-0.7,4),
+    0.3,
+    new RTMaterial(
+        new Color(0,0.5,1,1.0),
+        new Color(0,0,0,1.0),
+        RTMaterial.DIFFUSE,
+        1.02
+    ),
+    "sphere6"
+)
+let sphere7 = new RTSphere(
+    new Vec(-0.95,-0.8,3),
+    0.2,
+    new RTMaterial(
+        new Color(0,1,0.5,1.0),
+        new Color(0,0,0,1.0),
+        RTMaterial.DIFFUSE,
+        1.02
+    ),
+    "sphere7"
+)
+
+let tetra1 = new RTTetrahedron(
+    new Vec(0+1.15,-1,0+5),
+    new Vec(-0.4+1.15,-0.2,0.4+5),
+    new Vec(0.4+1.15,-0.2,0.4+5),
+    new Vec(0+1.15,-0.2,0+5),
+    new RTMaterial(
+        new Color(0.3,1,0,1.0),
+        new Color(0,0.1,0,1.0),
+        RTMaterial.DIFFUSE,
+        1.02
+    ),
+    "tetra1"
+)
+
 
 let light1 = new RTSphere(
     new Vec(0.6,-0.7,6.5),
@@ -337,6 +377,9 @@ rtscene.attach(sphere2)
 rtscene.attach(sphere3)
 rtscene.attach(sphere4)
 rtscene.attach(sphere5)
+rtscene.attach(sphere6)
+rtscene.attach(sphere7)
+rtscene.attach(tetra1)
 //rtscene.attach(ambientLight)
 //rtscene.attach(skyLight)
 //rtscene.attach(light1)
