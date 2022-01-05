@@ -197,11 +197,11 @@ export class RTShaderUtil{
                     colfra = matfra;
                     fnormvec=-fnormvec;
                 }
-                float Discriminant=1.0*(1.0-Dt*Dt);
+                float Discriminant=colfra*colfra*(1.0-Dt*Dt);
                 vec3 rfm = UV+fnormvec*abs(Dt);
                 float cos2 = sqrt(1.0-Discriminant);
                 float sin2 = sqrt(Discriminant);
-                float cos1 = Dt;
+                float cos1 = abs(Dt);
                 float sin1 = sqrt(1.0-Dt*Dt);
                 vec3 rfn = rfm*(sin2/cos2*cos1/sin1)-fnormvec*abs(Dt);
                 
