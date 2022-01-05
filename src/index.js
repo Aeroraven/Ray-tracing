@@ -54,8 +54,9 @@ gl.depthFunc(gl.LEQUAL)
 let rtscene = new RTScene(gl)
 let scparams={
     ground_pos:2,
-    ground_depth:15,
-    ground_height:-1
+    ground_depth:10,
+    ground_height:-1,
+    wall_height:1
 }
 
 let sphere = new RTSphere(
@@ -81,6 +82,19 @@ let sphere2 = new RTSphere(
     "sphere2"
 )
 
+let sphere3 = new RTSphere(
+    new Vec(1.2,-0.5,8),
+    0.5,
+    new RTMaterial(
+        new Color(1,1,1,1.0),
+        new Color(0,0,0,1.0),
+        RTMaterial.SPECULAR,
+        1.04
+    ),
+    "sphere3"
+)
+
+
 let light1 = new RTSphere(
     new Vec(0.6,-0.7,6.5),
     0.3,
@@ -98,32 +112,121 @@ let plane1 = new RTPlane(
     new Vec(scparams.ground_pos,scparams.ground_height,0),
     new Vec(scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
     new RTMaterial(
-        new Color(0.75,0.75,0.75,1.0),
+        new Color(1,0.5,0.5,1.0),
         new Color(0,0,0,1),
         RTMaterial.DIFFUSE
     ),
     "ground1"
 )
-
 let plane2 = new RTPlane(
     new Vec(-scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
     new Vec(scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
     new Vec(-scparams.ground_pos,scparams.ground_height,0),
     new RTMaterial(
-        new Color(0.75,0.75,0.75,1.0),
+        new Color(1,0.5,0.5,1.0),
         new Color(0,0,0,1),
         RTMaterial.DIFFUSE
     ),
     "ground2"
 )
 
+let wallback1 = new RTPlane(
+    new Vec(-scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
+    new Vec(scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
+    new Vec(-scparams.ground_pos,scparams.wall_height,scparams.ground_depth),
+    new RTMaterial(
+        new Color(0.5,0.5,1,1.0),
+        new Color(0,0,0,1),
+        RTMaterial.DIFFUSE
+    ),
+    "wallback1"
+)
+let wallback2 = new RTPlane(
+    new Vec(-scparams.ground_pos,scparams.wall_height,scparams.ground_depth),
+    new Vec(scparams.ground_pos,scparams.wall_height,scparams.ground_depth),
+    new Vec(scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
+    new RTMaterial(
+        new Color(0.5,0.5,1,1.0),
+        new Color(0,0,0,1),
+        RTMaterial.DIFFUSE
+    ),
+    "wallback2"
+)
+let celling1 = new RTPlane(
+    new Vec(-scparams.ground_pos,scparams.wall_height,0),
+    new Vec(scparams.ground_pos,scparams.wall_height,0),
+    new Vec(scparams.ground_pos,scparams.wall_height,scparams.ground_depth),
+    new RTMaterial(
+        new Color(1,0.5,0.5,1.0),
+        new Color(0,0,0,1),
+        RTMaterial.DIFFUSE
+    ),
+    "celling1"
+)
+let celling2 = new RTPlane(
+    new Vec(-scparams.ground_pos,scparams.wall_height,scparams.ground_depth),
+    new Vec(scparams.ground_pos,scparams.wall_height,scparams.ground_depth),
+    new Vec(-scparams.ground_pos,scparams.wall_height,0),
+    new RTMaterial(
+        new Color(1,0.5,0.5,1.0),
+        new Color(0,0,0,1),
+        RTMaterial.DIFFUSE
+    ),
+    "celling2"
+)
 
+let wallleft1 = new RTPlane(
+    new Vec(-scparams.ground_pos,scparams.wall_height,scparams.ground_depth),
+    new Vec(-scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
+    new Vec(-scparams.ground_pos,scparams.ground_height,0),
+    new RTMaterial(
+        new Color(0.5,1,0.5,1.0),
+        new Color(0,0,0,1),
+        RTMaterial.DIFFUSE
+    ),
+    "wallleft1"
+)
+let wallleft2 = new RTPlane(
+    new Vec(-scparams.ground_pos,scparams.wall_height,scparams.ground_depth),
+    new Vec(-scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
+    new Vec(-scparams.ground_pos,scparams.wall_height,0),
+    new RTMaterial(
+        new Color(0.5,1,0.5,1.0),
+        new Color(0,0,0,1),
+        RTMaterial.DIFFUSE
+    ),
+    "wallleft2"
+)
+
+
+let wallright1 = new RTPlane(
+    new Vec(scparams.ground_pos,scparams.wall_height,scparams.ground_depth),
+    new Vec(scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
+    new Vec(scparams.ground_pos,scparams.ground_height,0),
+    new RTMaterial(
+        new Color(0.5,1,0.5,1.0),
+        new Color(0,0,0,1),
+        RTMaterial.DIFFUSE
+    ),
+    "wallright1"
+)
+let wallright2 = new RTPlane(
+    new Vec(scparams.ground_pos,scparams.wall_height,scparams.ground_depth),
+    new Vec(scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
+    new Vec(scparams.ground_pos,scparams.wall_height,0),
+    new RTMaterial(
+        new Color(0.5,1,0.5,1.0),
+        new Color(0,0,0,1),
+        RTMaterial.DIFFUSE
+    ),
+    "wallright2"
+)
 
 let ground = new RTSphere(
     new Vec(0,-100,22),
     100,
     new RTMaterial(
-        new Color(0.8,0.8,0.8,1.0),
+        new Color(0.8,0.0,0.0,1.0),
         new Color(0,0,0,1),
         RTMaterial.DIFFUSE
     ),
@@ -140,9 +243,18 @@ let skyLight = new RTSkyLight(
 
 rtscene.attach(plane1)
 rtscene.attach(plane2)
+rtscene.attach(wallback1)
+rtscene.attach(wallback2)
+rtscene.attach(celling1)
+rtscene.attach(celling2)
+rtscene.attach(wallleft1)
+rtscene.attach(wallleft2)
+rtscene.attach(wallright1)
+rtscene.attach(wallright2)
 
 rtscene.attach(sphere)
 rtscene.attach(sphere2)
+rtscene.attach(sphere3)
 //rtscene.attach(ambientLight)
 //rtscene.attach(skyLight)
 rtscene.attach(light1)

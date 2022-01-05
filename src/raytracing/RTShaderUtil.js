@@ -328,7 +328,7 @@ export class RTShaderUtil{
                 vec4 ambient = vec4(0.0,0.0,0.0,1.0);
                 vec4 skylight = vec4(0.0,0.0,0.0,1.0);
                 `+ambientSetting+`
-                for(int i=1;i < 70;i+=1){
+                for(int i=1;i < 10;i+=1){
                     rp.direction = rp.direction / length(rp.direction);
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
@@ -351,7 +351,7 @@ export class RTShaderUtil{
                         return accColor;
                     }
                     rp.origin = rp.origin + rp.direction*0.002;
-                    if(i>25&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
+                    if(i>3&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
                         break;
                     }
                 }
@@ -364,9 +364,9 @@ export class RTShaderUtil{
         return `
             void main(){
                 
-                float loopsf = 60.0;
+                float loopsf = 10.0;
                 float randsrng = 0.00005;
-                const int loops = 60;
+                const int loops = 10;
                 vec3 nray = ray / length(ray);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
                 for(int i=0;i<loops;i++){
