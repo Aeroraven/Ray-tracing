@@ -104,7 +104,7 @@ export class RTShaderUtil{
                 float a = dot(r.direction,r.direction);
                 float b = 2.0*(dot(r.direction,p));
                 float delta = b*b-4.0*a*(dot(p,p)-s.r*s.r);
-                if(delta<1e-10){
+                if(delta<1e-4){
                     return -1.0;
                 }else{
                     float sdelta = sqrt(delta);
@@ -137,7 +137,7 @@ export class RTShaderUtil{
                 float s2 = length(cross(v2,v3));
                 float s3 = length(cross(v3,v1));
                 float s0 = length(cross(p.y-p.x,p.z-p.x));
-                if(abs(abs(s0)-abs(s1)-abs(s2)-abs(s3))<1e-5){
+                if(abs(abs(s0)-abs(s1)-abs(s2)-abs(s3))<1e-2){
                     return true;
                 }
                 return false;
@@ -328,7 +328,7 @@ export class RTShaderUtil{
                 vec4 ambient = vec4(0.0,0.0,0.0,1.0);
                 vec4 skylight = vec4(0.0,0.0,0.0,1.0);
                 `+ambientSetting+`
-                for(int i=1;i < 60;i+=1){
+                for(int i=1;i < 70;i+=1){
                     rp.direction = rp.direction / length(rp.direction);
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){

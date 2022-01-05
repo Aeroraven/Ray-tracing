@@ -52,10 +52,14 @@ gl.depthFunc(gl.LEQUAL)
 
 //Start Raytracing Render
 let rtscene = new RTScene(gl)
-
+let scparams={
+    ground_pos:2,
+    ground_depth:15,
+    ground_height:-1
+}
 
 let sphere = new RTSphere(
-    new Vec(0,-0.45,8),
+    new Vec(0,-0.5,8),
     0.5,
     new RTMaterial(
         new Color(0.8,0.8,0.8,1.0),
@@ -66,23 +70,23 @@ let sphere = new RTSphere(
 )
 
 let sphere2 = new RTSphere(
-    new Vec(-0.3,-0.8,7),
-    0.3,
+    new Vec(-0.5,-0.5,6),
+    0.5,
     new RTMaterial(
         new Color(1,1,1,1.0),
         new Color(0,0,0,1.0),
         RTMaterial.REFRACTION,
-        1.08
+        1.04
     ),
     "sphere2"
 )
 
 let light1 = new RTSphere(
-    new Vec(0.6,-0.8,7),
+    new Vec(0.6,-0.7,6.5),
     0.3,
     new RTMaterial(
         new Color(1,1,1,1.0),
-        new Color(5,5,5,1),
+        new Color(25,25,25,1),
         RTMaterial.DIFFUSE
     ),
     "light1"
@@ -90,9 +94,9 @@ let light1 = new RTSphere(
 
 
 let plane1 = new RTPlane(
-    new Vec(-6,0,-6),
-    new Vec(-6,0,40),
-    new Vec(40,0,-6),
+    new Vec(-scparams.ground_pos,scparams.ground_height,0),
+    new Vec(scparams.ground_pos,scparams.ground_height,0),
+    new Vec(scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
     new RTMaterial(
         new Color(0.75,0.75,0.75,1.0),
         new Color(0,0,0,1),
@@ -102,9 +106,9 @@ let plane1 = new RTPlane(
 )
 
 let plane2 = new RTPlane(
-    new Vec(2,2,0),
-    new Vec(2,3,0),
-    new Vec(3,2,0),
+    new Vec(-scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
+    new Vec(scparams.ground_pos,scparams.ground_height,scparams.ground_depth),
+    new Vec(-scparams.ground_pos,scparams.ground_height,0),
     new RTMaterial(
         new Color(0.75,0.75,0.75,1.0),
         new Color(0,0,0,1),
@@ -134,7 +138,9 @@ let skyLight = new RTSkyLight(
     new Color(0.2,0.5,0.7,1.0)
 )
 
-rtscene.attach(ground)
+rtscene.attach(plane1)
+rtscene.attach(plane2)
+
 rtscene.attach(sphere)
 rtscene.attach(sphere2)
 //rtscene.attach(ambientLight)
