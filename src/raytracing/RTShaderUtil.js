@@ -152,7 +152,7 @@ export class RTShaderUtil{
                     n = -n;
                 }
                 vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
-                sRay ret = sRay(p,ox/length(ox));
+                sRay ret = sRay(p,ox/length(ox),inr.inrefra);
                 return ret;
             }
         `
@@ -167,12 +167,12 @@ export class RTShaderUtil{
     // sRay 射入光线
     static funcDef_tellRefract(){
         return `
-            Boolean judgeRefract(sRay inr,vec3 p,vec3 N,float NiOverNt){
-                vec3 UV= p/dist(p);
+            bool judgeRefract(sRay inr,vec3 p,vec3 N,float NiOverNt){
+                vec3 UV= inr.direction/length(inr.direction);
                 float Dt=dot(UV,N);
-                float Discriminant=1.0-NiOverNt*NiOverNt*(1-Dt*Dt);
-                
-                if(Discriminant>0){
+                N = N/length(N);
+                float Discriminant=1.0-NiOverNt*NiOverNt*(1.0-Dt*Dt);
+                if(Discriminant>0.0){
                     return true;
                 }
                 else
@@ -184,12 +184,17 @@ export class RTShaderUtil{
     static funcDef_calRefract(){
         return `
             sRay calRefract(sRay inr,vec3 p,vec3 N,float NiOverNt){
-                vec3 UV= p/dist(p);
+                vec3 UV= inr.direction/length(inr.direction);
+                N = N/length(N);
                 float Dt=dot(UV,N);
-                float Discriminant=1.0-NiOverNt*NiOverNt*(1-Dt*Dt);
-                
-                refta_direction=NiOverNt*(UV-N*Dt)-N*sqrt(Discriminant);
-                sRay addrefra=sRay(p, refta_direction);
+                float Discriminant=1.0-NiOverNt*NiOverNt*(1.0-Dt*Dt);
+                vec3 refta_direction=NiOverNt*(UV-N*Dt)-N*sqrt(Discriminant);
+                sRay addrefra=sRay(p, refta_direction, 1.0);
+                if(Dt>0.0){
+                    addrefra.inrefra = 1.0;
+                }else{
+                    addrefra.inrefra = NiOverNt;
+                }
                 return addrefra;
             }
         `
@@ -236,7 +241,7 @@ export class RTShaderUtil{
                 if(dot(o,n)<0.0){
                     o = -o;
                 }
-                sRay rt = sRay(p,o);
+                sRay rt = sRay(p,o,inr.inrefra);
                 return rt;
             }
         `
@@ -276,7 +281,7 @@ export class RTShaderUtil{
                 vec3 s = cp;
                 d = d/length(d);
                 s = s + d*0.01;
-                sRay r = sRay(s,d);
+                sRay r = sRay(s,d,1.0);
                 if(fRayCollision(r).collided){
                     return true;
                 }
@@ -314,14 +319,15 @@ export class RTShaderUtil{
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
-                    float NiOverNt= rp.inrefra/1.00029
+                    float NiOverNt= rp.inrefra/1.00029;
             
-                    // judge_refract=judgeRefract(rp,hit.colvex,hit.colnorm,NiOverNt);
-                    // if(judge_refract==true){
-                    //     accColor = accColor + accMaterial * (hit.emissionColor+ambient);
-                    //     rp = calRefract(r,hit.colvex,hit.colnorm,NiOverNt);
-                    //     continue;
-                    // }
+                    //bool judge_refract=judgeRefract(rp,hit.colvex,hit.colnorm,NiOverNt);
+                    bool judge_refract=false;
+                    if(judge_refract==true){
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                        rp = calRefract(r,hit.colvex,hit.colnorm,NiOverNt);
+                        continue;
+                    }
 
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
@@ -330,7 +336,12 @@ export class RTShaderUtil{
                     }else if(hit.hitType==2){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
+                    }else if(hit.hitType==3){
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                        rp = calRefract(r,hit.colvex,hit.colnorm,NiOverNt);
+                        continue;
                     }
+
                     if(i>5&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
                         break;
                     }
@@ -352,7 +363,7 @@ export class RTShaderUtil{
                 for(int i=0;i<loops;i++){
                     float px = float(uSamples)*loopsf+float(i);
                     seeds = uvec2(px, px + 2.0) * uvec2(gl_FragCoord);
-                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng));
+                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng,1.0));
                 }
                 vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
                 fragc = fGammaCorrection(fragc/loopsf,0.45);
@@ -368,6 +379,8 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_DiffuseReflection,null],
             [RTShaderUtil.funcDef_InsidePlane,null],
             [RTShaderUtil.funcDef_PlaneNorm,null],
+            [RTShaderUtil.funcDef_calRefract,null],
+            [RTShaderUtil.funcDef_tellRefract,null],
             [RTShaderUtil.funcDef_RayPlaneIntersection,null],
             [RTShaderUtil.funcDef_RaySphereIntersection,null],
             [RTShaderUtil.funcDef_RayPoint,null],
