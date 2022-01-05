@@ -295,7 +295,7 @@ export class RTShaderUtil{
                             r = fDiffuseReflection(r,hit.colvex,hit.colnorm,attenCoe); 
                             photons[phItr] = sPhoton(hit.colvex,r.direction,oldColor);
                             phItr++;
-                            if(phItr=7000){
+                            if(phItr==pMaxIndex){
                                 break;
                             }
                             if(rng()<reflectRadio){
@@ -303,7 +303,7 @@ export class RTShaderUtil{
                             }
                         }
                         else if(hit.hitType==1){
-                            r = fDiffuseReflection(r,hit.colvex,hit.colnorm);
+                            r = fSpecularReflection(r,hit.colvex,hit.colnorm);
                         }
                     }
                     
@@ -315,8 +315,8 @@ export class RTShaderUtil{
 
     static funcDef_Distance(){
         return `
-            void fDistance(vec3 a, vec3 b){
-                return sqrt();
+            float fDistance(vec3 a, vec3 b){
+                return sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z));
             }
         `
     }
@@ -370,7 +370,7 @@ export class RTShaderUtil{
                     float dis = 0.0;
                     for(int i=0;i<pMaxIndex;i++){
                         pos = photons[i].position;
-                        dis = dist(pos,collidPos);
+                        dis = fDistance(pos,collidPos);
                         if(dis<minDis){
                             minDis = dis;
                             minIndex = i;
@@ -397,6 +397,7 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_SpecularReflection,null],
             [RTShaderUtil.funcDef_RayCollision,funcParam.intersection],
             [RTShaderUtil.funcDef_PhotonMapGenerate,null],
+            [RTShaderUtil.funcDef_Distance,null],
             [RTShaderUtil.funcDef_Main,null]
         ]
         let ret = ""
