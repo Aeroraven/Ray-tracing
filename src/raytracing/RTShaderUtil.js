@@ -19,10 +19,10 @@ export class RTShaderUtil{
                 vec3 color;
             };
 
-            sPhoton photons[1000];
+            sPhoton photons[1200];
 
             int phItr = 0;
-            int pMaxIndex = 1000;
+            int pMaxIndex = 1200;
         `
     }
     //Struct:Plane
@@ -278,13 +278,13 @@ export class RTShaderUtil{
             void fPhotonMapGenerate(){
                 int nEmittedPhotons = 3000;
                 float initCoe = 12.56;
-                float reflectRate = 0.8;
+                float reflectRate = 0.5;
                 float N = 1.0;
                 float attenCoe = reflectRate/N;
                 int maxLoop = 60;
                 float reflectRadio = 0.05;
                 for(int i=0 ; i<nEmittedPhotons;i++){
-                    sRay r = sRay(vec3(0.6,10,7),uniformlyRandomDirectionNew(),vec3(1.0,1.0,1.0));
+                    sRay r = sRay(vec3(0.6,3,7),uniformlyRandomDirectionNew(),vec3(1.0,1.0,1.0));
                     for(int j=0 ; j<maxLoop ; j++){
                         sRayCollisionResult hit = fRayCollision(r);
                         if(hit.collided == false){ 
@@ -298,9 +298,9 @@ export class RTShaderUtil{
                             if(phItr==pMaxIndex){
                                 break;
                             }
-                            if(rng()<reflectRadio){
-                                break;
-                            }
+                            // if(rng()<reflectRadio){
+                            //     break;
+                            // }
                         }
                         else if(hit.hitType==2){
                             r = fSpecularReflection(r,hit.colvex,hit.colnorm);
@@ -324,21 +324,14 @@ export class RTShaderUtil{
     static funcDef_Main(){
         return `
             void main(){
+                seeds = uvec2(uint(uTime),uint(uTime));
                 fPhotonMapGenerate();
-                
-            //     if(phItr>1700){
-            //         fragmentColor = vec4(1.0,0.0,0.0,1.0);
-            //     }
-            //     else{
-            //         fragmentColor = vec4(1.0,1.0,1.0,1.0);
-            //     }
-
-            // }
-                const int loops = 60;
+                const int loops = 10;
                 vec3 nray = ray / length(ray);
                 bool isDiffuse = false;
                 sRay r = sRay(eye,nray,vec3(0,0,0));
                 vec3 collidPos = vec3(0,0,0);
+                vec3 collidDir = vec3(0,0,0);
                 for(int i=0 ; i<loops ; i++){
                     sRayCollisionResult hit = fRayCollision(r);
                     if(hit.collided==false){
@@ -348,6 +341,7 @@ export class RTShaderUtil{
                     if(hit.hitType==1){
                         isDiffuse = true;
                         collidPos = hit.colvex;
+                        collidDir = r.direction;
                         break;
                     }
                     else if(hit.hitType==2){
@@ -355,12 +349,12 @@ export class RTShaderUtil{
                     }
                 }
                 if(isDiffuse){
-                    int nMin = 10;
-                    int index[10];
+                    int nMin = 40;
+                    int index[40];
                     for(int j=0;j<nMin;j++){
                         index[j] = -1;
                     }
-                    float minMinDis = 999999.0;
+                    float maxMinDis = -999999.0;
 
                     vec4 accColor = vec4(0.0,0.0,0.0,1.0);
 
@@ -389,21 +383,25 @@ export class RTShaderUtil{
                                 }
                             }
                         }
-                        if(minDis<minMinDis){
-                            minMinDis = minDis;
+                        if(minDis>maxMinDis){
+                            maxMinDis = minDis;
                         }
 
-                        accColor = accColor + vec4(photons[minIndex].color,1.0);
+                        float flux = -dot(normalize(photons[minIndex].direction),collidDir);
+
+                        accColor = accColor + vec4(flux*photons[minIndex].color,1.0);
 
                     }
 
-                    accColor = accColor/10.0;
+                    accColor = accColor/(maxMinDis*maxMinDis*3.14);
 
-                    fragmentColor = accColor;
+                    vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
+                    vec4 fragc = accColor;
+                    fragmentColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
                     return;
 
                 }
-                fragmentColor = vec4(1.0,1.0,1.0,1.0);
+                fragmentColor = vec4(1.0,0.0,0.0,1.0);
             }
         `
     }
