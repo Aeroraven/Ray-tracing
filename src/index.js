@@ -427,12 +427,12 @@ window.rtRotateDown = ()=>{
     rtscene.compile()
 }
 window.rtMoveLeft = ()=>{
-    rtscene.observer.cam.camPositon.x-=0.1
+    rtscene.observer.cam.camPositon.x+=0.1
     rtscene.resetCounter()
     rtscene.compile()
 }
 window.rtMoveRight = ()=>{
-    rtscene.observer.cam.camPositon.x+=0.1
+    rtscene.observer.cam.camPositon.x-=0.1
     rtscene.resetCounter()
     rtscene.compile()
 }
