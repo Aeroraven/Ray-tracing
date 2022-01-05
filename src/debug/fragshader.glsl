@@ -68,6 +68,7 @@ uniform sampler2D uTexture;
                 vec4 emissionColor;
                 vec4 materialColor;
                 int hitType;
+                float refra;
             };
         
             vec4 fGammaCorrection(vec4 col,float g){
@@ -124,10 +125,22 @@ uniform sampler2D uTexture;
                 vec3 UV= inr.direction/length(inr.direction);
                 N = N/length(N);
                 float Dt=dot(UV,N);
+                if(Dt>0.0){
+                    NiOverNt = 1.0/NiOverNt;
+                }
                 float Discriminant=1.0-NiOverNt*NiOverNt*(1.0-Dt*Dt);
+
                 vec3 refta_direction=NiOverNt*(UV-N*Dt)-N*sqrt(Discriminant);
-                sRay addrefra=sRay(p, refta_direction, 1.0);
-                if(Dt>0){
+                
+                vec3 rfm = UV+N*Dt;
+                float cos2 = sqrt(1.0-Discriminant);
+                float sin2 = sqrt(Discriminant);
+                float cos1 = Dt;
+                float sin1 = sqrt(1-Dt*Dt);
+                vec3 rfn = rfm*(sin2/cos2*cos1/sin1)-N*Dt;
+
+                sRay addrefra=sRay(p, rfn, 1.0);
+                if(Dt>0.0){
                     addrefra.inrefra = 1.0;
                 }else{
                     addrefra.inrefra = NiOverNt;
@@ -202,6 +215,7 @@ uniform sampler2D uTexture;
                 vec4 matcolor = vec4(0.0,0.0,0.0,1.0);
                 bool collided = false;
                 float tc=1e30;
+                float refra = 1.0;
                 int hitType = 0;
                 bool colc = false;
                 
@@ -215,6 +229,7 @@ uniform sampler2D uTexture;
                         emicolor = vec4(RTSphereground_EM);
                         matcolor = vec4(RTSphereground_CL);
                         hitType = 1;
+                        refra = RTSphereground_RF;
                         collided=true;
                     }
                 }
@@ -228,7 +243,8 @@ uniform sampler2D uTexture;
                         norm = fRayPoint(r,tc) - RTSpheresphere1_VC;
                         emicolor = vec4(RTSpheresphere1_EM);
                         matcolor = vec4(RTSpheresphere1_CL);
-                        hitType = 2;
+                        hitType = 1;
+                        refra = RTSpheresphere1_RF;
                         collided=true;
                     }
                 }
@@ -242,7 +258,8 @@ uniform sampler2D uTexture;
                         norm = fRayPoint(r,tc) - RTSpheresphere2_VC;
                         emicolor = vec4(RTSpheresphere2_EM);
                         matcolor = vec4(RTSpheresphere2_CL);
-                        hitType = 1;
+                        hitType = 3;
+                        refra = RTSpheresphere2_RF;
                         collided=true;
                     }
                 }
@@ -257,12 +274,13 @@ uniform sampler2D uTexture;
                         emicolor = vec4(RTSpherelight1_EM);
                         matcolor = vec4(RTSpherelight1_CL);
                         hitType = 1;
+                        refra = RTSpherelight1_RF;
                         collided=true;
                     }
                 }
         
                 vec3 colp = fRayPoint(r,t);
-                sRayCollisionResult ret = sRayCollisionResult(colp,norm,collided,emicolor,matcolor,hitType);
+                sRayCollisionResult ret = sRayCollisionResult(colp,norm,collided,emicolor,matcolor,hitType,refra);
                 return ret;
             }
         
@@ -303,9 +321,10 @@ uniform sampler2D uTexture;
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
-                    float NiOverNt= rp.inrefra/1.00029;
+                    float NiOverNt= rp.inrefra;
             
-                    bool judge_refract=judgeRefract(rp,hit.colvex,hit.colnorm,NiOverNt);
+                    //bool judge_refract=judgeRefract(rp,hit.colvex,hit.colnorm,NiOverNt);
+                    bool judge_refract=false;
                     if(judge_refract==true){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = calRefract(r,hit.colvex,hit.colnorm,NiOverNt);
@@ -319,7 +338,12 @@ uniform sampler2D uTexture;
                     }else if(hit.hitType==2){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
+                    }else if(hit.hitType==3){
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                        rp = calRefract(r,hit.colvex,hit.colnorm,rp.inrefra/hit.refra);
+                        continue;
                     }
+
                     if(i>5&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
                         break;
                     }
@@ -337,7 +361,7 @@ uniform sampler2D uTexture;
                 for(int i=0;i<loops;i++){
                     float px = float(uSamples)*loopsf+float(i);
                     seeds = uvec2(px, px + 2.0) * uvec2(gl_FragCoord);
-                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng));
+                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng,1.0));
                 }
                 vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
                 fragc = fGammaCorrection(fragc/loopsf,0.45);
