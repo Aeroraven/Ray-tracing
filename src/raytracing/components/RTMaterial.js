@@ -22,6 +22,7 @@ export class RTMaterial{
         }
     }
 }
+RTMaterial.ABSORBED = 0
 RTMaterial.DIFFUSE = 1
 RTMaterial.SPECULAR = 2
 RTMaterial.REFRACTION = 3

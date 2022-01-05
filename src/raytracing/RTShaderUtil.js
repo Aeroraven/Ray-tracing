@@ -191,9 +191,15 @@ export class RTShaderUtil{
                 if(Dt>0.0){
                     NiOverNt = 1.0/NiOverNt;
                 }
-                float Discriminant=1.0-NiOverNt*NiOverNt*(1.0-Dt*Dt);
-                vec3 refta_direction=NiOverNt*(UV-N*Dt)-N*sqrt(Discriminant);
-                sRay addrefra=sRay(p, refta_direction, 1.0);
+                float Discriminant=NiOverNt*NiOverNt*(1.0-Dt*Dt);
+                vec3 rfm = UV+N*Dt;
+                float cos2 = sqrt(1.0-Discriminant);
+                float sin2 = sqrt(Discriminant);
+                float cos1 = Dt;
+                float sin1 = sqrt(1.0-Dt*Dt);
+                vec3 rfn = rfm*(sin2/cos2*cos1/sin1)-N*Dt;
+
+                sRay addrefra=sRay(p, UV, 1.0);
                 if(Dt>0.0){
                     addrefra.inrefra = 1.0;
                 }else{
@@ -316,7 +322,7 @@ export class RTShaderUtil{
                 vec4 ambient = vec4(0.0,0.0,0.0,1.0);
                 vec4 skylight = vec4(0.0,0.0,0.0,1.0);
                 `+ambientSetting+`
-                for(int i=1;i < 30;i+=1){
+                for(int i=1;i < 20;i+=1){
                     rp.direction = rp.direction / length(rp.direction);
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
@@ -324,15 +330,6 @@ export class RTShaderUtil{
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
-                    float NiOverNt= rp.inrefra;
-            
-                    //bool judge_refract=judgeRefract(rp,hit.colvex,hit.colnorm,NiOverNt);
-                    bool judge_refract=false;
-                    if(judge_refract==true){
-                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
-                        rp = calRefract(r,hit.colvex,hit.colnorm,NiOverNt);
-                        continue;
-                    }
 
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
@@ -342,12 +339,14 @@ export class RTShaderUtil{
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
                     }else if(hit.hitType==3){
-                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
-                        rp = calRefract(r,hit.colvex,hit.colnorm,rp.inrefra/hit.refra);
-                        continue;
+                        //accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                        rp=calRefract(rp,hit.colvex,hit.colnorm,rp.inrefra/hit.refra);
+                    }else if(hit.hitType==0){
+                        return accColor;
                     }
+                    
 
-                    if(i>5&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
+                    if(i>25&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
                         break;
                     }
                 }
@@ -360,9 +359,9 @@ export class RTShaderUtil{
         return `
             void main(){
                 
-                float loopsf = 60.0;
+                float loopsf = 30.0;
                 float randsrng = 0.00005;
-                const int loops = 60;
+                const int loops = 30;
                 vec3 nray = ray / length(ray);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
                 for(int i=0;i<loops;i++){
@@ -436,7 +435,7 @@ export class RTShaderUtil{
             }
         }
         let ret = `#version 300 es
-            precision lowp float;
+            precision highp float;
             precision lowp int;
         \n`
         ret += RTShaderUtil.uniformDefConcat(shaderMap)
