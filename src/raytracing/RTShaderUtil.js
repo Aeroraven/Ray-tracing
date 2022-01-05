@@ -7,7 +7,22 @@ export class RTShaderUtil{
             struct sRay{
                 vec3 origin;
                 vec3 direction;
+                vec3 color;
             };
+        `
+    }
+    static structDef_Photon(){
+        return `
+            struct sPhoton{
+                vec3 position;
+                vec3 direction;
+                vec3 color;
+            };
+
+            sPhoton photons[7000];
+
+            int phItr = 0;
+            int pMaxIndex = 7000;
         `
     }
     //Struct:Plane
@@ -53,6 +68,7 @@ export class RTShaderUtil{
         let lst = [
             RTShaderUtil.structDef_Plane,
             RTShaderUtil.structDef_Ray,
+            RTShaderUtil.structDef_Photon,
             RTShaderUtil.structDef_Sphere,
             RTShaderUtil.structDef_RayCollisionResult
         ]
@@ -151,7 +167,7 @@ export class RTShaderUtil{
                     n = -n;
                 }
                 vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
-                sRay ret = sRay(p,ox/length(ox));
+                sRay ret = sRay(p,ox/length(ox),inr.color);
                 return ret;
             }
         `
@@ -178,7 +194,7 @@ export class RTShaderUtil{
     //Function:DiffuseReflection 漫反射
     static funcDef_DiffuseReflection(){
         return `
-            sRay fDiffuseReflection(sRay inr,vec3 p,vec3 norm){
+            sRay fDiffuseReflection(sRay inr,vec3 p,vec3 norm,float attenCoe){
                 vec3 n = norm;
                 n = n / length(n);
                 if(dot(inr.direction,norm)>0.0){
@@ -188,7 +204,7 @@ export class RTShaderUtil{
                 if(dot(o,n)<0.0){
                     o = -o;
                 }
-                sRay rt = sRay(p,o);
+                sRay rt = sRay(p,o,inr.color*attenCoe);
                 return rt;
             }
         `
@@ -217,31 +233,6 @@ export class RTShaderUtil{
         return `
             vec4 fGammaCorrection(vec4 col,float g){
                 return vec4(pow(col.x,g),pow(col.y,g),pow(col.z,g),pow(col.w,g));
-            }
-        `
-    }
-
-    static funcDef_ShadowLight(){
-        return `
-            bool fShadowLight(vec3 light,vec3 cp){
-                vec3 d = light - cp;
-                vec3 s = cp;
-                d = d/length(d);
-                s = s + d*0.01;
-                sRay r = sRay(s,d);
-                if(fRayCollision(r).collided){
-                    return true;
-                }
-                return false;
-            }
-        `
-    }
-    static funcDef_ShadowTests(objects=""){
-        return `
-            float fShadowTests(vec3 cp){
-                float intensity = 0.0;
-                `+objects+`
-                return intensity;
             }
         `
     }
@@ -281,23 +272,114 @@ export class RTShaderUtil{
         `
     }
 
+    //Function:PhotonMap 光子贴图生成
+    static funcDef_PhotonMapGenerate(){
+        return `
+            void fPhotonMapGenerate(){
+                int nEmittedPhotons = 30;
+                float initCoe = 12.56;
+                float reflectRate = 0.7;
+                float N = 1.0;
+                float attenCoe = reflectRate/N;
+                int maxLoop = 60;
+                float reflectRadio = 0.1;
+                for(int i=0 ; i<nEmittedPhotons;i++){
+                    sRay r = sRay(vec3(0.6,3,7),uniformlyRandomDirectionNew(),initCoe*vec3(1.0,1.0,1.0));
+                    for(int j=0 ; j<maxLoop ; j++){
+                        sRayCollisionResult hit = fRayCollision(r);
+                        if(hit.collided == false){ 
+                            break;
+                        }
+                        if(hit.hitType==2){
+                            vec3 oldColor = r.color;
+                            r = fDiffuseReflection(r,hit.colvex,hit.colnorm,attenCoe); 
+                            photons[phItr] = sPhoton(hit.colvex,r.direction,oldColor);
+                            phItr++;
+                            if(phItr=7000){
+                                break;
+                            }
+                            if(rng()<reflectRadio){
+                                break;
+                            }
+                        }
+                        else if(hit.hitType==1){
+                            r = fDiffuseReflection(r,hit.colvex,hit.colnorm);
+                        }
+                    }
+                    
+                }
+               
+            }
+        `
+    }
+
+    static funcDef_Distance(){
+        return `
+            void fDistance(vec3 a, vec3 b){
+                return sqrt();
+            }
+        `
+    }
+
     static funcDef_Main(){
+        // return `
+        //     void main(){
+                
+        //         float loopsf = 60.0;
+        //         float randsrng = 0.00005;
+        //         const int loops = 60;
+        //         vec3 nray = ray / length(ray);
+        //         vec4 fragc = vec4(0.0,0.0,0.0,0.0);
+        //         for(int i=0;i<loops;i++){
+        //             float px = float(uSamples)*loopsf+float(i);
+        //             seeds = uvec2(px, px + 2.0) * uvec2(gl_FragCoord);
+        //             fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng));
+        //         }
+        //         vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
+        //         fragc = fGammaCorrection(fragc/loopsf,0.45);
+        //         fragmentColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
+        //     }
+        // `
         return `
             void main(){
-                
-                float loopsf = 60.0;
-                float randsrng = 0.00005;
+                fPhotonMapGenerate();    
                 const int loops = 60;
                 vec3 nray = ray / length(ray);
-                vec4 fragc = vec4(0.0,0.0,0.0,0.0);
-                for(int i=0;i<loops;i++){
-                    float px = float(uSamples)*loopsf+float(i);
-                    seeds = uvec2(px, px + 2.0) * uvec2(gl_FragCoord);
-                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng));
+                bool isDiffuse = false;
+                sRay r = sRay(eye,nray,vec3(0,0,0));
+                vec3 collidPos = vec3(0,0,0);
+                for(int i=0 ; i<loops ; i++){
+                    sRayCollisionResult hit = fRayCollision(r);
+                    if(hit.collided==false){
+                        fragmentColor = vec4(0,0,0,0);
+                        return;
+                    }
+                    if(hit.hitType==2){
+                        isDiffuse = true;
+                        collidPos = hit.colvex;
+                        break;
+                    }
+                    else if(hit.hitType==1){
+                        r = fSpecularReflection(r,hit.colvex,hit.colnorm);
+                    }
                 }
-                vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
-                fragc = fGammaCorrection(fragc/loopsf,0.45);
-                fragmentColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
+                if(isDiffuse){
+                    float minDis = -999999.0;
+                    int minIndex = -1;
+                    vec3 pos = vec3(0,0,0);
+                    float dis = 0.0;
+                    for(int i=0;i<pMaxIndex;i++){
+                        pos = photons[i].position;
+                        dis = dist(pos,collidPos);
+                        if(dis<minDis){
+                            minDis = dis;
+                            minIndex = i;
+                        }
+                    }
+                    fragmentColor = vec4(0,0,0,0);
+                    return;
+                }
+                fragmentColor = vec4(0,0,0,0);
             }
         `
     }
@@ -314,9 +396,7 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_RayPoint,null],
             [RTShaderUtil.funcDef_SpecularReflection,null],
             [RTShaderUtil.funcDef_RayCollision,funcParam.intersection],
-            [RTShaderUtil.funcDef_ShadowLight,null],
-            [RTShaderUtil.funcDef_ShadowTests,funcParam.pointlight],
-            [RTShaderUtil.funcDef_Raytracing,funcParam.ambientSetting],
+            [RTShaderUtil.funcDef_PhotonMapGenerate,null],
             [RTShaderUtil.funcDef_Main,null]
         ]
         let ret = ""
