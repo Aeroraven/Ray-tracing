@@ -153,7 +153,7 @@ let dispInterval = 5
 let disableAnimation = true
 function render(){
     states = states+1
-    monitor.innerHTML = "SAMPLES:"+states+", RenderFPS:"+parseInt(states*1000/(Date.now()-timeStart))
+    monitor.innerHTML = "RenderedFrames:"+states+", RenderFPS:"+parseInt(states*1000/(Date.now()-timeStart))
     dispmonitor.innerHTML = " DisplayedFrames:"+dispSample+", DispFPS:"+parseInt(dispSample*1000/(Date.now()-timeStart))
     rtscene.render()
     if(disableAnimation){

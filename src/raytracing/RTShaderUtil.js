@@ -184,26 +184,32 @@ export class RTShaderUtil{
 
     static funcDef_calRefract(){
         return `
-            sRay calRefract(sRay inr,vec3 p,vec3 N,float NiOverNt){
+            sRay calRefract(sRay inr,vec3 p,vec3 N,float matfra){
                 vec3 UV= inr.direction/length(inr.direction);
-                N = N/length(N);
-                float Dt=dot(UV,N);
-                if(Dt>0.0){
-                    NiOverNt = 1.0/NiOverNt;
+                vec3 normvec = N/length(N);
+                vec3 fnormvec = normvec;
+                float Dt=dot(UV,normvec);
+                float colfra=0.0;
+                if(Dt<0.0){
+                    colfra = 1.0/matfra;
+                    fnormvec=normvec;
+                }else{
+                    colfra = matfra;
+                    fnormvec=-fnormvec;
                 }
-                float Discriminant=NiOverNt*NiOverNt*(1.0-Dt*Dt);
-                vec3 rfm = UV+N*Dt;
+                float Discriminant=1.0*(1.0-Dt*Dt);
+                vec3 rfm = UV+fnormvec*abs(Dt);
                 float cos2 = sqrt(1.0-Discriminant);
                 float sin2 = sqrt(Discriminant);
                 float cos1 = Dt;
                 float sin1 = sqrt(1.0-Dt*Dt);
-                vec3 rfn = rfm*(sin2/cos2*cos1/sin1)-N*Dt;
-
-                sRay addrefra=sRay(p, UV, 1.0);
+                vec3 rfn = rfm*(sin2/cos2*cos1/sin1)-fnormvec*abs(Dt);
+                
+                sRay addrefra=sRay(p, rfn, 1.0);
                 if(Dt>0.0){
                     addrefra.inrefra = 1.0;
                 }else{
-                    addrefra.inrefra = NiOverNt;
+                    addrefra.inrefra = matfra;
                 }
                 return addrefra;
             }
@@ -340,7 +346,7 @@ export class RTShaderUtil{
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
                     }else if(hit.hitType==3){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
-                        rp=calRefract(rp,hit.colvex,hit.colnorm,rp.inrefra/hit.refra);
+                        rp=calRefract(rp,hit.colvex,hit.colnorm,hit.refra);
                     }else if(hit.hitType==0){
                         return accColor;
                     }
