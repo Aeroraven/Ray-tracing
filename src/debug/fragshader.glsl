@@ -2,7 +2,48 @@
             precision lowp float;
             precision lowp int;
         
-uniform vec3 RTSphereground_VC;
+
+            struct sPlane{
+                vec3 x,y,z;
+                vec4 emissionColor;
+                vec4 materialColor;
+                
+            };
+        
+            struct sRay{
+                vec3 origin;
+                vec3 direction;
+                vec3 color;
+            };
+        
+            struct sPhoton{
+                vec3 position;
+                vec3 direction;
+                vec3 color;
+            };
+
+            //sPhoton photons[1200];
+
+            //int phItr = 0;
+            int pMaxIndex = 1200;
+        
+            struct sSphere{
+                vec3 c;
+                float r;
+                vec4 emissionColor;
+                vec4 materialColor;
+                
+            };
+        
+            struct sRayCollisionResult{
+                vec3 colvex;
+                vec3 colnorm;
+                bool collided;
+                vec4 emissionColor;
+                vec4 materialColor;
+                int hitType;
+            };
+        uniform vec3 RTSphereground_VC;
 uniform float RTSphereground_RA;
 uniform vec4 RTSphereground_EM;
 uniform vec4 RTSphereground_CL;
@@ -30,82 +71,43 @@ uniform mat4 uModelViewMatrix;
 uniform float uTime;
 uniform int uSamples;
 uniform sampler2D uTexture;
+uniform sPhoton photons[1000];
+uniform int phItr;
 
-            float state = 12.2;
+            uvec2 seeds = uvec2(1.0,1.0);
             in vec3 ray;
             in vec2 tex;
-        
-            struct sPlane{
-                vec3 x,y,z;
-                vec4 emissionColor;
-                vec4 materialColor;
-                
-            };
-        
-            struct sRay{
-                vec3 origin;
-                vec3 direction;
-            };
-        
-            struct sSphere{
-                vec3 c;
-                float r;
-                vec4 emissionColor;
-                vec4 materialColor;
-                
-            };
-        
-            struct sRayCollisionResult{
-                vec3 colvex;
-                vec3 colnorm;
-                bool collided;
-                vec4 emissionColor;
-                vec4 materialColor;
-                int hitType;
-            };
+            out vec4 fragmentColor;
         
             vec4 fGammaCorrection(vec4 col,float g){
                 return vec4(pow(col.x,g),pow(col.y,g),pow(col.z,g),pow(col.w,g));
             }
         
-            uvec2 seeds = uvec2(1);
             float rng()
             {
                 seeds += uvec2(1);
-                    uvec2 q = 1103515245U * ( (seeds >> 1U) ^ (seeds.yx) );
-                    uint  n = 1103515245U * ( (q.x) ^ (q.y >> 3U) );
+                uvec2 q = 1103515245U * ( (seeds >> 1U) ^ (seeds.yx) );
+                uint  n = 1103515245U * ( (q.x) ^ (q.y >> 3U) );
                 return float(n) * (1.0 / float(0xffffffffU));
             }
-
-            float random(vec3 scale, float seed) {
-                return fract(sin(dot(gl_FragCoord.xyz + seed, scale)) *  seed);
-            }
-            vec3 uniformlyRandomDirection() {
-                float up = rng() * 2.0 - 1.0; // range: -1 to +1
+            vec3 uniformlyRandomDirectionNew() {
+                float up = rng() * 2.0 - 1.0; 
                 float over = sqrt( max(0.0, 1.0 - up * up) );
                 float around = rng() * 6.28318530717;
                 return normalize(vec3(cos(around) * over, up, sin(around) * over));	
             }
-            float rand(vec2 co){
-                return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-            }
-            float fRandNoiseV3(vec3 x){
-                float ret = rand(vec2(x.x+x.y+x.z,state));
-                state += ret;
-                return ret;
-            }
         
-            sRay fDiffuseReflection(sRay inr,vec3 p,vec3 norm){
+            sRay fDiffuseReflection(sRay inr,vec3 p,vec3 norm,float attenCoe){
                 vec3 n = norm;
                 n = n / length(n);
                 if(dot(inr.direction,norm)>0.0){
                     n = -n;
                 }
-                vec3 o = uniformlyRandomDirection();
+                vec3 o = uniformlyRandomDirectionNew();
                 if(dot(o,n)<0.0){
                     o = -o;
                 }
-                sRay rt = sRay(p,o);
+                sRay rt = sRay(p,o,inr.color*attenCoe);
                 return rt;
             }
         
@@ -171,7 +173,7 @@ uniform sampler2D uTexture;
                     n = -n;
                 }
                 vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
-                sRay ret = sRay(p,ox/length(ox));
+                sRay ret = sRay(p,ox/length(ox),inr.color);
                 return ret;
             }
         
@@ -246,70 +248,137 @@ uniform sampler2D uTexture;
                 return ret;
             }
         
-            bool fShadowLight(vec3 light,vec3 cp){
-                vec3 d = light - cp;
-                vec3 s = cp;
-                d = d/length(d);
-                s = s + d*0.01;
-                sRay r = sRay(s,d);
-                if(fRayCollision(r).collided){
-                    return true;
+            void fPhotonMapGenerate(){
+                int nEmittedPhotons = 30;
+                float initCoe = 12.56;
+                float reflectRate = 0.5;
+                float N = 1.0;
+                float attenCoe = reflectRate/N;
+                int maxLoop = 60;
+                float reflectRadio = 0.05;
+                for(int i=0 ; i<nEmittedPhotons;i++){
+                    vec3 random = uniformlyRandomDirectionNew();
+                    if (random.y>0.0){
+                        random = -random;
+                    }
+                    sRay r = sRay(vec3(0.6,0.5,7),random,vec3(1.0,1.0,1.0));
+                    for(int j=0 ; j<maxLoop ; j++){
+                        sRayCollisionResult hit = fRayCollision(r);
+                        if(hit.collided == false){ 
+                            break;
+                        }
+                        if(hit.hitType==1){
+                            vec3 oldColor = r.color;
+                            r = fDiffuseReflection(r,hit.colvex,hit.colnorm,attenCoe); 
+                            r.color = r.color*hit.materialColor.xyz;
+                            photons[phItr] = sPhoton(hit.colvex,r.direction,r.color);
+                            phItr++;
+                            if(phItr==pMaxIndex){
+                                break;
+                            }
+                            // if(rng()<reflectRadio){
+                            //     break;
+                            // }
+                        }
+                        else if(hit.hitType==2){
+                            r = fSpecularReflection(r,hit.colvex,hit.colnorm);
+                        }
+                    }
+                    
                 }
-                return false;
+               
             }
         
-            float fShadowTests(vec3 cp){
-                float intensity = 0.0;
-                
-                return intensity;
-            }
-        
-            vec4 fRaytracing(sRay r){
-                sRay rp = r;
-                vec4 accColor = vec4(0.0,0.0,0.0,1.0);
-                vec4 accMaterial = vec4(1.0,1.0,1.0,1.0);
-                vec4 ambient = vec4(0.0,0.0,0.0,1.0);
-                vec4 skylight = vec4(0.0,0.0,0.0,1.0);
-                
-        ambient = vec4(RTAmbientLightundefined_CL);
-        
-        skylight = vec4(RTSkyLightundefined_CL);
-        
-                for(int i=1;i < 30;i+=1){
-                    rp.direction = rp.direction / length(rp.direction);
-                    sRayCollisionResult hit = fRayCollision(rp);
-                    if(hit.collided == false){
-                        accColor = accColor + accMaterial * skylight; 
-                        break;
-                    }
-                    accMaterial = accMaterial * hit.materialColor;
-                    if(hit.hitType==1){
-                        rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
-                        float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
-                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
-                    }else if(hit.hitType==2){
-                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
-                        rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
-                    }
-                    if(i>5&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
-                        break;
-                    }
-                }
-                return accColor;
+            float fDistance(vec3 a, vec3 b){
+                return sqrt((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y)+(a.z-b.z)*(a.z-b.z));
             }
         
             void main(){
-                float loopsf = 1.0/20.0;
-                float randsrng = 0.0001;
-                const int loops = 20;
+                seeds = uvec2(uint(uTime),uint(uTime));
+                //fPhotonMapGenerate();
+                const int loops = 10;
                 vec3 nray = ray / length(ray);
-                vec4 fragc = vec4(0.0,0.0,0.0,0.0);
-                for(int i=0;i<loops;i++){
-                    state += fRandNoiseV3(vec3(uTime,uTime+212.0,uTime+2.0));
-                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirection() * randsrng));
+                bool isDiffuse = false;
+                sRay r = sRay(eye,nray,vec3(0,0,0));
+                vec3 collidPos = vec3(0,0,0);
+                vec3 collidDir = vec3(0,0,0);
+                for(int i=0 ; i<loops ; i++){
+                    sRayCollisionResult hit = fRayCollision(r);
+                    if(hit.collided==false){
+                        fragmentColor = vec4(0,0.5,0,1.0);
+                        return;
+                    }
+                    if(hit.hitType==1){
+                        isDiffuse = true;
+                        collidPos = hit.colvex;
+                        collidDir = r.direction;
+                        break;
+                    }
+                    else if(hit.hitType==2){
+                        r = fSpecularReflection(r,hit.colvex,hit.colnorm);
+                    }
                 }
+                if(isDiffuse){
+                    int nMin = 50;
+                    int index[50];
+                    for(int j=0;j<nMin;j++){
+                        index[j] = -1;
+                    }
+                    float maxMinDis = -999999.0;
+
+                    vec4 accColor = vec4(0.0,0.0,0.0,1.0);
+
+                    for(int j=0;j<nMin;j++){
+
+                        float minDis = 999999.0;
+                        int minIndex = -1;
+                        vec3 pos = vec3(0,0,0);
+                        float dis = 0.0;
+                        bool flag = true;
+                        for(int i=0;i<phItr;i++){
+                            dis = length(photons[i].position-collidPos);
+                            if(dis<minDis){
+                                for(int k=0;k<j;k++){
+                                    if(index[k]==i){
+                                        flag = false;
+                                    }
+                                }
+                                if(flag){
+                                    minDis = dis;
+                                    minIndex = i;
+                                }
+                            }
+                        }
+                        if(minDis>maxMinDis){
+                            maxMinDis = minDis;
+                        }
+
+                        float flux = dot(normalize(photons[minIndex].direction),collidDir);
+
+                        accColor = accColor + vec4(max(flux,0.0)*photons[minIndex].color,1.0);
+
+                    }
+
+                    accColor = accColor/(maxMinDis*maxMinDis*3.14*float(phItr));
+
+                    vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
+                    vec4 fragc = accColor;
+                    // if(accColor.x<0.0 || accColor.y<0.0 || accColor.z<0.0 ){
+                    //     fragmentColor = vec4(1.0,0.0,0.0,1.0);
+                    //     return;
+                    // }
+                    fragmentColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
+                    fragmentColor.x = min(1.0,fragmentColor.x);
+                    fragmentColor.y = min(1.0,fragmentColor.y);
+                    fragmentColor.z = min(1.0,fragmentColor.z);
+                    return;
+                }
+
+                
+
                 vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
-                fragc = fGammaCorrection(fragc*loopsf,0.45);
-                gl_FragColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
+                fragmentColor = (textc*float(uSamples))/(float(uSamples));
+                return;
+                // fragmentColor = vec4(1.0,0.0,0.0,1.0);
             }
         

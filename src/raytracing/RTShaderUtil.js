@@ -19,9 +19,9 @@ export class RTShaderUtil{
                 vec3 color;
             };
 
-            sPhoton photons[1200];
+            //sPhoton photons[1200];
 
-            int phItr = 0;
+            //int phItr = 0;
             int pMaxIndex = 1200;
         `
     }
@@ -330,7 +330,7 @@ export class RTShaderUtil{
         return `
             void main(){
                 seeds = uvec2(uint(uTime),uint(uTime));
-                fPhotonMapGenerate();
+                //fPhotonMapGenerate();
                 const int loops = 10;
                 vec3 nray = ray / length(ray);
                 bool isDiffuse = false;
@@ -411,10 +411,7 @@ export class RTShaderUtil{
 
                 
 
-                vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
-                fragmentColor = (textc*float(uSamples))/(float(uSamples));
-                return;
-                // fragmentColor = vec4(1.0,0.0,0.0,1.0);
+                fragmentColor = vec4(1.0,0.0,0.0,1.0);
             }
         `
     }
@@ -431,7 +428,6 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_RayPoint,null],
             [RTShaderUtil.funcDef_SpecularReflection,null],
             [RTShaderUtil.funcDef_RayCollision,funcParam.intersection],
-            [RTShaderUtil.funcDef_PhotonMapGenerate,null],
             [RTShaderUtil.funcDef_Distance,null],
             [RTShaderUtil.funcDef_Main,null]
         ]
@@ -478,9 +474,9 @@ export class RTShaderUtil{
             precision lowp float;
             precision lowp int;
         \n`
+        ret += RTShaderUtil.structDefConcat();
         ret += RTShaderUtil.uniformDefConcat(shaderMap)
         ret += RTShaderUtil.globalVarDefConcat()
-        ret += RTShaderUtil.structDefConcat();
         ret += RTShaderUtil.funcDefConcat(funcParam);
         return ret;
     }

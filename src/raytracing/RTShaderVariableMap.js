@@ -22,6 +22,9 @@ export class RTShaderVariableMap{
             x+="uniform "
             x+=e.type;
             x+=e.name;
+            if(e.type==RTShaderVariableMap.PHOTON){
+                x+='[300]'
+            }
             x+=';\n'
         }
         return x
@@ -50,6 +53,17 @@ export class RTShaderVariableMap{
             if(e.type==RTShaderVariableMap.FLOAT){
                 gl.uniform1f(u,e.initValue)
             }
+            if(e.type==RTShaderVariableMap.PHOTON){
+                console.log(e.initValue)
+                for(let i=0;i<e.initValue.length;i++){
+                    u = gl.getUniformLocation(shaderProgram,e.name+'['+i+'].position')
+                    gl.uniform3fv(u,e.initValue[i].position.getGLMatVec3())
+                    u = gl.getUniformLocation(shaderProgram,e.name+'['+i+'].direction')
+                    gl.uniform3fv(u,e.initValue[i].direction.getGLMatVec3())
+                    u = gl.getUniformLocation(shaderProgram,e.name+'['+i+'].color')
+                    gl.uniform3fv(u,e.initValue[i].color.getGLMatVec3())
+                }
+            }
             if(e.type==RTShaderVariableMap.SAMPLER2D){
                 if(e.initValue==0){
                     gl.activeTexture(gl.TEXTURE0)
@@ -70,3 +84,4 @@ RTShaderVariableMap.INT = 'int '
 RTShaderVariableMap.BOOL = 'bool '
 RTShaderVariableMap.FLOAT = 'float '
 RTShaderVariableMap.SAMPLER2D = 'sampler2D '
+RTShaderVariableMap.PHOTON = 'sPhoton '

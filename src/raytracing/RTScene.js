@@ -119,6 +119,10 @@ export class RTScene{
         this.shaderVar.insert('uTime',Date.now()-this.startTimestamp,RTShaderVariableMap.FLOAT)
         this.shaderVar.insert('uSamples',this.sampleCount,RTShaderVariableMap.INT)
         this.loadAlternativeTexture()
+        //Photon Map
+        this.shaderVar.insert("photons",this.photons,RTShaderVariableMap.PHOTON)
+        this.shaderVar.insert('phItr',this.photons.length,RTShaderVariableMap.INT)
+        
     }
     genIntersectionJudge(){
         let x = ``
@@ -153,6 +157,7 @@ export class RTScene{
         this.sampleCount = 0
     }
     compile(){
+        this.genPhotonMap()
         this.compiledShader = this.shader.getShaderProgram(this)
     }
     updateUniform(){
@@ -175,9 +180,11 @@ export class RTScene{
             let p = new Vec(0,0,0)
             p = r.origin.add(this.geometryList[i].vc.neg())
             let a = r.direction.dot(r.direction)
-            let b = 2.0*r.direction.dot(p)
-            let delta = b*b-4*a*(p.dot(p)-this.geometryList[i].ra.dot(this.geometryList[i].ra))
-            if(detlta<1e-10){
+            let b = 2.0*p.dot(r.direction)
+            
+            let delta = b*b-4*a*(p.dot(p)-this.geometryList[i].ra*this.geometryList[i].ra)
+            
+            if(delta<1e-10){
                 curT = 1e100
             }else{
                 let sdelta = Math.sqrt(delta);
@@ -200,12 +207,12 @@ export class RTScene{
             }
         }
         if(bestT<1e99){
-            let colvex = r.origin+r.direction.norm().magnify(bestT)
-            let colnorm = colvex.add(this.geometryList[i].ra.neg()).norm()
+            let colvex = r.origin.add(r.direction.norm().magnify(bestT))
+            let colnorm = colvex.add(this.geometryList[bestIdx].vc.neg()).norm()
             let collided = true
-            let emissionColor = this.geometryList[i].material.em
-            let materialColor = this.geometryList[i].material.cl
-            let hitType = this.geometryList[i].material.tp
+            let emissionColor = this.geometryList[bestIdx].material.em
+            let materialColor = this.geometryList[bestIdx].material.cl
+            let hitType = this.geometryList[bestIdx].material.tp
             
             let ret = new RTSRayCollisionResult(
                 colvex,
@@ -237,12 +244,13 @@ export class RTScene{
         if(o.dot(n)<0){
             o = o.neg()
         }
+        window.inr = inr
         let rt=new RTSRay(p,o,inr.color.magnify(attenCoe))
         return rt
     }
     genPhotonMap(){
         
-        let nEmittedPhotons = 30;
+        let nEmittedPhotons = 150;
         let initCoe = 12.56;
         let reflectRate = 0.5;
         let N = 1.0;
@@ -260,16 +268,19 @@ export class RTScene{
             }
             let r= new RTSRay(new Vec(0.6,0.5,0.7),random,new Vec(1.0,1.0,1.0))
             for(let j=0 ; j<maxLoop ; j++){
+                
                 let hit = this.photonMapHitTest(r)
                 if(hit.collided == false){ 
+                    
                     break;
                 }
                 if(hit.hitType==1){
                     let oldColor = r.color;
                     r = this.diffuseReflection(r,hit.colvex,hit.colnorm,attenCoe)
-                    r.color = r.color.dot(
+                    r.color = r.color.dotvec(
                         new Vec(hit.materialColor.r,hit.materialColor.g,hit.materialColor.b)
                     )
+                    
                     this.photons.push(
                         new RTSPhoton(hit.colvex,r.direction,r.color)
                     )
@@ -278,7 +289,6 @@ export class RTScene{
                     }
                 }
             }
-            
         }
 
     }
@@ -295,6 +305,7 @@ export class RTScene{
         gl.clearColor(0,0,0,1)
 
         if(firstRender){
+            
             gl.useProgram(this.compiledShader)
             this.shaderVar.bindShaderVarible(gl,this.compiledShader)
             this.updateUniform()

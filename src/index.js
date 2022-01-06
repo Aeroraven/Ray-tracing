@@ -136,8 +136,6 @@ let skyLight = new RTSkyLight(
 rtscene.attach(ground)
 rtscene.attach(sphere)
 rtscene.attach(sphere2)
-//rtscene.attach(ambientLight)
-//rtscene.attach(skyLight)
 rtscene.attach(light1)
 
 rtscene.compile()
