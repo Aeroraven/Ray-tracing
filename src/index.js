@@ -144,13 +144,13 @@ let sphere7 = new RTSphere(
 )
 
 let tetra1 = new RTTetrahedron(
-    new Vec(0+1.15,-1,0+5),
-    new Vec(-0.4+1.15,-0.2,0.4+5),
-    new Vec(0.4+1.15,-0.2,0.4+5),
     new Vec(0+1.15,-0.2,0+5),
+    new Vec(-0.4+1.15,-1,0.4+5),
+    new Vec(0.4+1.15,-1,0.4+5),
+    new Vec(0+1.15,-1,0+5),
     new RTMaterial(
         new Color(0.3,1,0,1.0),
-        new Color(0,0.1,0,1.0),
+        new Color(0,0.0,0,1.0),
         RTMaterial.DIFFUSE,
         1.02
     ),

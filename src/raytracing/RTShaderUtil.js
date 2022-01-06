@@ -401,7 +401,7 @@ export class RTShaderUtil{
                     fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng,1.0));
                 }
                 vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
-                fragc = fGammaCorrection(fragc/loopsf,0.45);
+                fragc = fGammaCorrection(fragc/loopsf,0.40);
                 fragmentColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
             }
         `
@@ -467,7 +467,7 @@ export class RTShaderUtil{
             }
         }
         let ret = `#version 300 es
-            precision highp float;
+            precision lowp float;
             precision lowp int;
         \n`
         ret += RTShaderUtil.uniformDefConcat(shaderMap)
