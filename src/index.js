@@ -69,7 +69,7 @@ let sphere2 = new RTSphere(
     new Vec(-0.6,-0.8,7),
     0.3,
     new RTMaterial(
-        new Color(1,1,1,1.0),
+        new Color(1,0,0,1.0),
         new Color(0,0,0,1),
         RTMaterial.DIFFUSE
     ),

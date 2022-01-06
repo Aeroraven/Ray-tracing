@@ -276,7 +276,7 @@ export class RTShaderUtil{
     static funcDef_PhotonMapGenerate(){
         return `
             void fPhotonMapGenerate(){
-                int nEmittedPhotons = 3000;
+                int nEmittedPhotons = 30;
                 float initCoe = 12.56;
                 float reflectRate = 0.5;
                 float N = 1.0;
@@ -284,7 +284,11 @@ export class RTShaderUtil{
                 int maxLoop = 60;
                 float reflectRadio = 0.05;
                 for(int i=0 ; i<nEmittedPhotons;i++){
-                    sRay r = sRay(vec3(0.6,3,7),uniformlyRandomDirectionNew(),vec3(1.0,1.0,1.0));
+                    vec3 random = uniformlyRandomDirectionNew();
+                    if (random.y>0.0){
+                        random = -random;
+                    }
+                    sRay r = sRay(vec3(0.6,0.5,7),random,vec3(1.0,1.0,1.0));
                     for(int j=0 ; j<maxLoop ; j++){
                         sRayCollisionResult hit = fRayCollision(r);
                         if(hit.collided == false){ 
@@ -293,7 +297,8 @@ export class RTShaderUtil{
                         if(hit.hitType==1){
                             vec3 oldColor = r.color;
                             r = fDiffuseReflection(r,hit.colvex,hit.colnorm,attenCoe); 
-                            photons[phItr] = sPhoton(hit.colvex,r.direction,oldColor);
+                            r.color = r.color*hit.materialColor.xyz;
+                            photons[phItr] = sPhoton(hit.colvex,r.direction,r.color);
                             phItr++;
                             if(phItr==pMaxIndex){
                                 break;
@@ -349,8 +354,8 @@ export class RTShaderUtil{
                     }
                 }
                 if(isDiffuse){
-                    int nMin = 40;
-                    int index[40];
+                    int nMin = 50;
+                    int index[50];
                     for(int j=0;j<nMin;j++){
                         index[j] = -1;
                     }
@@ -364,17 +369,13 @@ export class RTShaderUtil{
                         int minIndex = -1;
                         vec3 pos = vec3(0,0,0);
                         float dis = 0.0;
+                        bool flag = true;
                         for(int i=0;i<phItr;i++){
-                            pos = photons[i].position;
-                            dis = fDistance(pos,collidPos);
+                            dis = length(photons[i].position-collidPos);
                             if(dis<minDis){
-                                bool flag = true;
-                                for(int k=0;k<nMin;k++){
+                                for(int k=0;k<j;k++){
                                     if(index[k]==i){
                                         flag = false;
-                                    }
-                                    else if(index[k]==-1){
-                                        break;
                                     }
                                 }
                                 if(flag){
@@ -387,21 +388,33 @@ export class RTShaderUtil{
                             maxMinDis = minDis;
                         }
 
-                        float flux = -dot(normalize(photons[minIndex].direction),collidDir);
+                        float flux = dot(normalize(photons[minIndex].direction),collidDir);
 
-                        accColor = accColor + vec4(flux*photons[minIndex].color,1.0);
+                        accColor = accColor + vec4(max(flux,0.0)*photons[minIndex].color,1.0);
 
                     }
 
-                    accColor = accColor/(maxMinDis*maxMinDis*3.14);
+                    accColor = accColor/(maxMinDis*maxMinDis*3.14*float(phItr));
 
                     vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
                     vec4 fragc = accColor;
+                    // if(accColor.x<0.0 || accColor.y<0.0 || accColor.z<0.0 ){
+                    //     fragmentColor = vec4(1.0,0.0,0.0,1.0);
+                    //     return;
+                    // }
                     fragmentColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
+                    fragmentColor.x = min(1.0,fragmentColor.x);
+                    fragmentColor.y = min(1.0,fragmentColor.y);
+                    fragmentColor.z = min(1.0,fragmentColor.z);
                     return;
-
                 }
-                fragmentColor = vec4(1.0,0.0,0.0,1.0);
+
+                
+
+                vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
+                fragmentColor = (textc*float(uSamples))/(float(uSamples));
+                return;
+                // fragmentColor = vec4(1.0,0.0,0.0,1.0);
             }
         `
     }
