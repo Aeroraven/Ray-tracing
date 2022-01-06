@@ -12,7 +12,8 @@ import { RTShaderUtil } from "./RTShaderUtil"
 import { RTShaderVariableMap } from "./RTShaderVariableMap"
 import { vec3 } from "gl-matrix"
 import { RTSRay } from "./components/RTSRay"
-
+import { RTSRayCollisionResult } from "./components/RTSRayCollisionResult"
+import { RTSPhoton } from "./components/RTSPhoton"
 export class RTScene{
     constructor(gl){
         this.gl = gl
@@ -75,6 +76,9 @@ export class RTScene{
         //Optional
         this.ambientLight = new RTAmbientLight(new Color(0,0,0,1))
         this.skylight = new RTSkyLight(new Color(0,0,0,1))
+
+        //PhotonMap
+        this.photons = []
         
     }
     clear(){
@@ -165,10 +169,79 @@ export class RTScene{
         this.frameBuffer.end()
 
     }
-    photonMapHitTest(){
+    photonMapHitTest(r){
+        let bestT = 1e100,bestIdx = 0, curT=1e100;
+        for(let i=0;i<this.geometryList.length;i++){
+            let p = new Vec(0,0,0)
+            p = r.origin.add(this.geometryList[i].vc.neg())
+            let a = r.direction.dot(r.direction)
+            let b = 2.0*r.direction.dot(p)
+            let delta = b*b-4*a*(p.dot(p)-this.geometryList[i].ra.dot(this.geometryList[i].ra))
+            if(detlta<1e-10){
+                curT = 1e100
+            }else{
+                let sdelta = Math.sqrt(delta);
+                let t1 = (-b+sdelta)/(2*a);
+                let t2 = (-b-sdelta)/(2*a);
+                if(t1>0.0&&t2>0.0){
+                    if(t1>t2){
+                        curT = t2;
+                    }
+                    curT =  t1;
+                }
+                if(t1>0.0&&t2<0.0){
+                    curT =  t1;
+                }
+                curT =  t2;
+            }
+            if(curT<bestT){
+                bestT=curT
+                bestIdx=i;
+            }
+        }
+        if(bestT<1e99){
+            let colvex = r.origin+r.direction.norm().magnify(bestT)
+            let colnorm = colvex.add(this.geometryList[i].ra.neg()).norm()
+            let collided = true
+            let emissionColor = this.geometryList[i].material.em
+            let materialColor = this.geometryList[i].material.cl
+            let hitType = this.geometryList[i].material.tp
+            
+            let ret = new RTSRayCollisionResult(
+                colvex,
+                colnorm,
+                collided,
+                emissionColor,
+                materialColor,
+                hitType
+            )
+            return ret
+        }else{
+            return new RTSRayCollisionResult(
+                null,null,false,null,null,null
+            )
+        }
+        
         
     }
+    diffuseReflection(inr,p,norm,attenCoe){
+        let n = norm.norm()
+        if(inr.direction.dot(norm)>0){
+            n = n.neg()
+        }
+        let dx = Math.random()-0.5
+        let dy = Math.random()-0.5
+        let dz = Math.random()-0.5
+        let dl = Math.sqrt(dx*dx+dy*dy+dz*dz)
+        let o= new Vec(dx/dl,dy/dl,dz/dl)
+        if(o.dot(n)<0){
+            o = o.neg()
+        }
+        let rt=new RTSRay(p,o,inr.color.magnify(attenCoe))
+        return rt
+    }
     genPhotonMap(){
+        
         let nEmittedPhotons = 30;
         let initCoe = 12.56;
         let reflectRate = 0.5;
@@ -177,9 +250,9 @@ export class RTScene{
         let  maxLoop = 60;
         let reflectRadio = 0.05;
         for(let i=0 ; i<nEmittedPhotons;i++){
-            let dx = Math.random()
-            let dy = Math.random()
-            let dz = Math.random()
+            let dx = Math.random()-0.5
+            let dy = Math.random()-0.5
+            let dz = Math.random()-0.5
             let dl = Math.sqrt(dx*dx+dy*dy+dz*dz)
             let random= new Vec(dx/dl,dy/dl,dz/dl)
             if (random.y>0.0){
@@ -187,15 +260,22 @@ export class RTScene{
             }
             let r= new RTSRay(new Vec(0.6,0.5,0.7),random,new Vec(1.0,1.0,1.0))
             for(let j=0 ; j<maxLoop ; j++){
-                let hit = {}
+                let hit = this.photonMapHitTest(r)
                 if(hit.collided == false){ 
                     break;
                 }
                 if(hit.hitType==1){
                     let oldColor = r.color;
-                    //r = 漫反射
-                }else if(hit.hitType==2){
-                
+                    r = this.diffuseReflection(r,hit.colvex,hit.colnorm,attenCoe)
+                    r.color = r.color.dot(
+                        new Vec(hit.materialColor.r,hit.materialColor.g,hit.materialColor.b)
+                    )
+                    this.photons.push(
+                        new RTSPhoton(hit.colvex,r.direction,r.color)
+                    )
+                    if(this.photons.length==1000){
+                        break;
+                    }
                 }
             }
             
