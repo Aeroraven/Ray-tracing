@@ -12,7 +12,7 @@ export class RTShaderUtil{
         `
     }
     static structDef_Photon(){
-        let insString = ""
+        let insString = "\n"
         for(let i=0;i<2000;i++){
             insString+="sPhoton photons_"+i+";\n";
         }
