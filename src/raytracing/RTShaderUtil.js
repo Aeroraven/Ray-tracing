@@ -191,12 +191,16 @@ export class RTShaderUtil{
                 float cos1 = abs(Dt);
                 float sin1 = sqrt(1.0-Dt*Dt);
                 vec3 rfn = rfm*(sin2/cos2*cos1/sin1)-fnormvec*abs(Dt);
-                
+                bool cond = judgeRefract(inr,p,N,colfra);
                 sRay addrefra=sRay(p, rfn, 1.0);
-                if(Dt>0.0){
-                    addrefra.inrefra = 1.0;
+                if(cond!=cond){
+                    addrefra = fSpecularReflection(inr,p,N);
                 }else{
-                    addrefra.inrefra = matfra;
+                    if(Dt>0.0){
+                        addrefra.inrefra = 1.0;
+                    }else{
+                        addrefra.inrefra = matfra;
+                    }
                 }
                 return addrefra;
             }
@@ -414,13 +418,13 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_DiffuseReflection,null],
             [RTShaderUtil.funcDef_InsidePlane,null],
             [RTShaderUtil.funcDef_PlaneNorm,null],
-            [RTShaderUtil.funcDef_calRefract,null],
-            [RTShaderUtil.funcDef_tellRefract,null],
             [RTShaderUtil.funcDef_GlsryReflection,null],
             [RTShaderUtil.funcDef_RayPlaneIntersection,null],
             [RTShaderUtil.funcDef_RaySphereIntersection,null],
             [RTShaderUtil.funcDef_RayPoint,null],
             [RTShaderUtil.funcDef_SpecularReflection,null],
+            [RTShaderUtil.funcDef_tellRefract,null],
+            [RTShaderUtil.funcDef_calRefract,null],
             [RTShaderUtil.funcDef_RayCollision,funcParam.intersection],
             [RTShaderUtil.funcDef_ShadowLight,null],
             [RTShaderUtil.funcDef_ShadowTests,funcParam.pointlight],
