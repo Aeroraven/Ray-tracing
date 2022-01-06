@@ -11,6 +11,7 @@ import { RTShader } from "./RTShader"
 import { RTShaderUtil } from "./RTShaderUtil"
 import { RTShaderVariableMap } from "./RTShaderVariableMap"
 import { vec3 } from "gl-matrix"
+import { RTSRay } from "./components/RTSRay"
 
 export class RTScene{
     constructor(gl){
@@ -164,6 +165,9 @@ export class RTScene{
         this.frameBuffer.end()
 
     }
+    photonMapHitTest(){
+        
+    }
     genPhotonMap(){
         let nEmittedPhotons = 30;
         let initCoe = 12.56;
@@ -173,7 +177,28 @@ export class RTScene{
         let  maxLoop = 60;
         let reflectRadio = 0.05;
         for(let i=0 ; i<nEmittedPhotons;i++){
-            let random= new Vec()
+            let dx = Math.random()
+            let dy = Math.random()
+            let dz = Math.random()
+            let dl = Math.sqrt(dx*dx+dy*dy+dz*dz)
+            let random= new Vec(dx/dl,dy/dl,dz/dl)
+            if (random.y>0.0){
+                random = new Vec(-dx/dl,-dy/dl,-dz/dl)
+            }
+            let r= new RTSRay(new Vec(0.6,0.5,0.7),random,new Vec(1.0,1.0,1.0))
+            for(let j=0 ; j<maxLoop ; j++){
+                let hit = {}
+                if(hit.collided == false){ 
+                    break;
+                }
+                if(hit.hitType==1){
+                    let oldColor = r.color;
+                    //r = 漫反射
+                }else if(hit.hitType==2){
+                
+                }
+            }
+            
         }
 
     }
