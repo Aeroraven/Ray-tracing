@@ -112,7 +112,7 @@ let sphere5 = new RTSphere(
     new Vec(0.35,-0.6,5),
     0.4,
     new RTMaterial(
-        new Color(0.5,1,1,1.0),
+        new Color(1,0.5,0.5,1.0),
         new Color(0,0,0,1.0),
         RTMaterial.MOSSY,
         1.04
