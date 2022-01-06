@@ -10,6 +10,7 @@ import { RTObserver } from "./RTObserver"
 import { RTShader } from "./RTShader"
 import { RTShaderUtil } from "./RTShaderUtil"
 import { RTShaderVariableMap } from "./RTShaderVariableMap"
+import { vec3 } from "gl-matrix"
 
 export class RTScene{
     constructor(gl){
@@ -152,7 +153,6 @@ export class RTScene{
     updateUniform(){
         this.shaderVar.insert('uTime',new Date().getTime()-this.startTimestamp,RTShaderVariableMap.FLOAT)
         this.shaderVar.insert('uSamples',this.sampleCount,RTShaderVariableMap.INT)
-        console.log(this.sampleCount)
     }
     clear(){
         this.frameBuffer.start()
@@ -162,6 +162,19 @@ export class RTScene{
         gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)
         this.renderOutput[0].end()
         this.frameBuffer.end()
+
+    }
+    genPhotonMap(){
+        let nEmittedPhotons = 30;
+        let initCoe = 12.56;
+        let reflectRate = 0.5;
+        let N = 1.0;
+        let attenCoe = reflectRate/N;
+        let  maxLoop = 60;
+        let reflectRadio = 0.05;
+        for(let i=0 ; i<nEmittedPhotons;i++){
+            let random= new Vec()
+        }
 
     }
     render(firstRender=true,doClear = false){
