@@ -13,8 +13,8 @@ export class RTShaderUtil{
     }
     static structDef_Photon(){
         let insString = "\n"
-        for(let i=0;i<2000;i++){
-            insString+="sPhoton photons_"+i+";\n";
+        for(let i=0;i<5;i++){
+            insString+="sPhoton photons_"+i+"[500];\n";
         }
         return `
             struct sPhoton{
@@ -280,10 +280,10 @@ export class RTShaderUtil{
     //Function:PhotonMap 光子贴图生成
     static funcDef_PhotonMapGenerate(){
         let insString =""
-        for(let i=0;i<2000;i++){
+        for(let i=0;i<5;i++){
             insString+=`
-                if(phItr==`+i+`){
-                    photons_`+i+`=sPhoton(hit.colvex,r.direction,r.color);
+                if(phItr>=`+i*500+`&&phItr<`+(i+1)*500+`){
+                    photons_`+i+`[phItr-`+(i*500)+`]=sPhoton(hit.colvex,r.direction,r.color);
                 }
             `
         }
@@ -341,18 +341,18 @@ export class RTShaderUtil{
 
     static funcDef_Main(){
         let insStr = ""
-        for(let i=0;i<2000;i++){
+        for(let i=0;i<5;i++){
             insStr+=`
-                if(i==`+i+`){
-                    tmp = photons_`+i+`;
+                if(i>=`+i*500+`&&i<`+(i+1)*500+`){
+                    tmp = photons_`+i+`[i-`+i*500+`];
                 }
             `
         }
         let insStr2 = ""
-        for(let i=0;i<2000;i++){
+        for(let i=0;i<5;i++){
             insStr2+=`
-                if(minIndex==`+i+`){
-                    tmp2 = photons_`+i+`;
+                if(minIndex>=`+i*500+`&&minIndex<`+(i+1)*500+`){
+                    tmp2 = photons_`+i+`[minIndex-`+i*500+`];
                 }
             `
         }
@@ -400,7 +400,7 @@ export class RTShaderUtil{
                         float dis = 0.0;
                         bool flag = true;
                         for(int i=0;i<phItr;i++){
-                            sPhoton tmp = photons_1;
+                            sPhoton tmp = photons_1[0];
                             `+insStr+`
                             dis = length(tmp.position-collidPos);
                             if(dis<minDis){
@@ -418,7 +418,7 @@ export class RTShaderUtil{
                         if(minDis>maxMinDis){
                             maxMinDis = minDis;
                         }
-                        sPhoton tmp2 = photons_1;
+                        sPhoton tmp2 = photons_1[0];
                         `+insStr2+`
                         float flux = dot(normalize(tmp2.direction),collidDir);
 
