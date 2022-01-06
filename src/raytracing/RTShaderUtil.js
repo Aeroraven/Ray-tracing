@@ -12,6 +12,10 @@ export class RTShaderUtil{
         `
     }
     static structDef_Photon(){
+        let insString = ""
+        for(let i=0;i<2000;i++){
+            insString+="sPhoton photons_"+i+";\n";
+        }
         return `
             struct sPhoton{
                 vec3 position;
@@ -19,8 +23,9 @@ export class RTShaderUtil{
                 vec3 color;
             };
 
-            sPhoton photons[1200];
-
+            //sPhoton photonX[1200];`
+            +insString+
+            `
             int phItr = 0;
             int pMaxIndex = 1200;
         `
@@ -274,6 +279,14 @@ export class RTShaderUtil{
 
     //Function:PhotonMap 光子贴图生成
     static funcDef_PhotonMapGenerate(){
+        let insString =""
+        for(let i=0;i<2000;i++){
+            insString+=`
+                if(phItr==`+i+`){
+                    photons_`+i+`=sPhoton(hit.colvex,r.direction,r.color);
+                }
+            `
+        }
         return `
             void fPhotonMapGenerate(){
                 int nEmittedPhotons = 30;
@@ -298,7 +311,7 @@ export class RTShaderUtil{
                             vec3 oldColor = r.color;
                             r = fDiffuseReflection(r,hit.colvex,hit.colnorm,attenCoe); 
                             r.color = r.color*hit.materialColor.xyz;
-                            photons[phItr] = sPhoton(hit.colvex,r.direction,r.color);
+                            `+insString+`
                             phItr++;
                             if(phItr==pMaxIndex){
                                 break;
@@ -327,6 +340,22 @@ export class RTShaderUtil{
     }
 
     static funcDef_Main(){
+        let insStr = ""
+        for(let i=0;i<2000;i++){
+            insStr+=`
+                if(i==`+i+`){
+                    tmp = photons_`+i+`;
+                }
+            `
+        }
+        let insStr2 = ""
+        for(let i=0;i<2000;i++){
+            insStr2+=`
+                if(minIndex==`+i+`){
+                    tmp2 = photons_`+i+`;
+                }
+            `
+        }
         return `
             void main(){
                 seeds = uvec2(uint(uTime),uint(uTime));
@@ -371,7 +400,9 @@ export class RTShaderUtil{
                         float dis = 0.0;
                         bool flag = true;
                         for(int i=0;i<phItr;i++){
-                            dis = length(photons[i].position-collidPos);
+                            sPhoton tmp = photons_1;
+                            `+insStr+`
+                            dis = length(tmp.position-collidPos);
                             if(dis<minDis){
                                 for(int k=0;k<j;k++){
                                     if(index[k]==i){
@@ -387,10 +418,11 @@ export class RTShaderUtil{
                         if(minDis>maxMinDis){
                             maxMinDis = minDis;
                         }
+                        sPhoton tmp2 = photons_1;
+                        `+insStr2+`
+                        float flux = dot(normalize(tmp2.direction),collidDir);
 
-                        float flux = dot(normalize(photons[minIndex].direction),collidDir);
-
-                        accColor = accColor + vec4(max(flux,0.0)*photons[minIndex].color,1.0);
+                        accColor = accColor + vec4(max(flux,0.0)*tmp2.color,1.0);
 
                     }
 
