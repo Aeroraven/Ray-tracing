@@ -7,6 +7,7 @@ export class RTShaderUtil{
             struct sRay{
                 vec3 origin;
                 vec3 direction;
+                float inrefra;
             };
         `
     }
@@ -43,6 +44,7 @@ export class RTShaderUtil{
                 vec4 emissionColor;
                 vec4 materialColor;
                 int hitType;
+                float refra;
             };
         `
     }
@@ -151,11 +153,78 @@ export class RTShaderUtil{
                     n = -n;
                 }
                 vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
-                sRay ret = sRay(p,ox/length(ox));
+                sRay ret = sRay(p,ox/length(ox),inr.inrefra);
                 return ret;
             }
         `
     }
+
+    // 折射dch
+    // sRay inr:入射光线
+    // judgeRefract函数注解：
+    // vec3 p:入射点
+    // vec3 N:入射点法线
+    // float NiOverNt:折射率
+    // sRay 射入光线
+    static funcDef_tellRefract(){
+        return `
+            bool judgeRefract(sRay inr,vec3 p,vec3 N,float NiOverNt){
+                vec3 UV= inr.direction/length(inr.direction);
+                float Dt=dot(UV,N);
+                N = N/length(N);
+                float Discriminant=1.0-NiOverNt*NiOverNt*(1.0-Dt*Dt);
+                if(Discriminant>0.0){
+                    return true;
+                }
+                else
+                  return false;
+            }
+        `
+    }
+
+    static funcDef_calRefract(){
+        return `
+            sRay calRefract(sRay inr,vec3 p,vec3 N,float matfra){
+                vec3 UV= inr.direction/length(inr.direction);
+                vec3 normvec = N/length(N);
+                vec3 fnormvec = normvec;
+                float Dt=dot(UV,normvec);
+                float colfra=0.0;
+                if(Dt<0.0){
+                    colfra = 1.0/matfra;
+                    fnormvec=normvec;
+                }else{
+                    colfra = matfra;
+                    fnormvec=-fnormvec;
+                }
+                float Discriminant=colfra*colfra*(1.0-Dt*Dt);
+                vec3 rfm = UV+fnormvec*abs(Dt);
+                float cos2 = sqrt(1.0-Discriminant);
+                float sin2 = sqrt(Discriminant);
+                float cos1 = abs(Dt);
+                float sin1 = sqrt(1.0-Dt*Dt);
+                vec3 rfn = rfm*(sin2/cos2*cos1/sin1)-fnormvec*abs(Dt);
+                
+                sRay addrefra=sRay(p, rfn, 1.0);
+                if(Dt>0.0){
+                    addrefra.inrefra = 1.0;
+                }else{
+                    addrefra.inrefra = matfra;
+                }
+                return addrefra;
+            }
+        `
+    }
+
+    // 菲涅耳近似公式
+    static funcDef_Schlick(){
+        return `
+            float calSchlick(cos,f0){
+                return f0+(1-f0)*(1-cos)*(1-cos)*(1-cos)*(1-cos)*(1-cos);
+            }
+        `
+    }
+
 
     //Function:RandNoiseV3 随机数
     static funcDef_RandNoiseV3(){
@@ -457,7 +526,7 @@ export class RTShaderUtil{
                 if(dot(o,n)<0.0){
                     o = -o;
                 }
-                sRay rt = sRay(p,o);
+                sRay rt = sRay(p,o,inr.inrefra);
                 return rt;
             }
         `
@@ -472,11 +541,12 @@ export class RTShaderUtil{
                 vec4 matcolor = vec4(0.0,0.0,0.0,1.0);
                 bool collided = false;
                 float tc=1e30;
+                float refra = 1.0;
                 int hitType = 0;
                 bool colc = false;
                 `+objects+`
                 vec3 colp = fRayPoint(r,t);
-                sRayCollisionResult ret = sRayCollisionResult(colp,norm,collided,emicolor,matcolor,hitType);
+                sRayCollisionResult ret = sRayCollisionResult(colp,norm,collided,emicolor,matcolor,hitType,refra);
                 return ret;
             }
         `
@@ -497,7 +567,7 @@ export class RTShaderUtil{
                 vec3 s = cp;
                 d = d/length(d);
                 s = s + d*0.01;
-                sRay r = sRay(s,d);
+                sRay r = sRay(s,d,1.0);
                 if(fRayCollision(r).collided){
                     return true;
                 }
@@ -515,6 +585,8 @@ export class RTShaderUtil{
         `
     }
 
+    
+
     //Function:Raytracing 光线追踪
     static funcDef_Raytracing(ambientSetting){
         return `
@@ -525,12 +597,8 @@ export class RTShaderUtil{
                 vec4 ambient = vec4(0.0,0.0,0.0,1.0);
                 vec4 skylight = vec4(0.0,0.0,0.0,1.0);
                 `+ambientSetting+`
-<<<<<<< Updated upstream
-                for(int i=1;i < 30;i+=1){
-=======
                 for(int i=1;i < 60;i+=1){
                     showOceanSky(accColor,rp.origin);
->>>>>>> Stashed changes
                     rp.direction = rp.direction / length(rp.direction);
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
@@ -538,6 +606,7 @@ export class RTShaderUtil{
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
+
                     if(hit.hitType==1){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
@@ -545,13 +614,14 @@ export class RTShaderUtil{
                     }else if(hit.hitType==2){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
+                    }else if(hit.hitType==3){
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                        rp=calRefract(rp,hit.colvex,hit.colnorm,hit.refra);
+                    }else if(hit.hitType==0){
+                        return accColor;
                     }
-<<<<<<< Updated upstream
-                    if(i>5&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
-=======
                     rp.origin = rp.origin + rp.direction*0.002;
                     if(i>25&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
->>>>>>> Stashed changes
                         break;
                     }
                 }
@@ -572,7 +642,7 @@ export class RTShaderUtil{
                 for(int i=0;i<loops;i++){
                     float px = float(uSamples)*loopsf+float(i);
                     seeds = uvec2(px, px + 2.0) * uvec2(gl_FragCoord);
-                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng));
+                    fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng,1.0));
                 }
                 vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
                 fragc = fGammaCorrection(fragc/loopsf,0.45);
@@ -602,6 +672,8 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_DiffuseReflection,null],
             [RTShaderUtil.funcDef_InsidePlane,null],
             [RTShaderUtil.funcDef_PlaneNorm,null],
+            [RTShaderUtil.funcDef_calRefract,null],
+            [RTShaderUtil.funcDef_tellRefract,null],
             [RTShaderUtil.funcDef_RayPlaneIntersection,null],
             [RTShaderUtil.funcDef_RaySphereIntersection,null],
             [RTShaderUtil.funcDef_RayPoint,null],
@@ -652,11 +724,7 @@ export class RTShaderUtil{
             }
         }
         let ret = `#version 300 es
-<<<<<<< Updated upstream
-            precision lowp float;
-=======
             precision mediump float;
->>>>>>> Stashed changes
             precision lowp int;
         \n`
         ret += RTShaderUtil.uniformDefConcat(shaderMap)
