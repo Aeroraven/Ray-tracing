@@ -1,7 +1,7 @@
 //Raytracing: 四面体
 
-import { RTMaterial } from "./RTMaterial"
-import { RTShaderVariableMap } from "../RTShaderVariableMap"
+import { RTMaterial } from "../RTMaterial"
+import { RTShaderVariableMap } from "../../RTShaderVariableMap"
 import { RTPlane } from "./RTPlane"
 
 export class RTTetrahedron{
