@@ -395,7 +395,7 @@ export class RTShaderUtil{
             void main(){
                 
                 float loopsf = 10.0;
-                float randsrng = 0.00005;
+                float randsrng = 0.0005;
                 const int loops = 10;
                 vec3 nray = ray / length(ray);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);

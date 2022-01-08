@@ -1,7 +1,7 @@
 //Raytracing: 球体组件
 
-import { RTMaterial } from "./RTMaterial"
-import { RTShaderVariableMap } from "../RTShaderVariableMap"
+import { RTMaterial } from "../RTMaterial"
+import { RTShaderVariableMap } from "../../RTShaderVariableMap"
 
 export class RTSphere{
 

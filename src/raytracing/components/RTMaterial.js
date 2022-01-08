@@ -1,4 +1,5 @@
-//Raytracing:材质组件
+//Raytracing: Material Components
+
 
 import { Color } from "../../core/Color"
 
@@ -22,9 +23,11 @@ export class RTMaterial{
         }
     }
 }
-RTMaterial.ABSORBED = 0
+
+RTMaterial.ABSORBED = 0 
 RTMaterial.DIFFUSE = 1
 RTMaterial.SPECULAR = 2
 RTMaterial.REFRACTION = 3
 RTMaterial.METAL = 4
 RTMaterial.MOSSY = 5
+
