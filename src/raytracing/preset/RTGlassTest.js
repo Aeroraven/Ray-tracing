@@ -23,7 +23,7 @@ export default class RTSceneWithGeometry{
             new RTMaterial(
                 new Color(0.8,0.8,0.0,1.0),
                 new Color(0,0,0,1),
-                RTMaterial.METAL
+                RTMaterial.DIFFUSE
             ),
             "sphere1"
         )
