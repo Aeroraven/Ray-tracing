@@ -611,7 +611,7 @@ export class RTShaderUtil{
             vec3 ox = (inr.direction/dot(inr.direction,n)+2.0*n)+o;
             ox = ox/length(ox);
             sRay rt = sRay(p,ox,inr.inrefra);
-            return rt
+            return rt;
         }
         `
     }
@@ -672,9 +672,9 @@ export class RTShaderUtil{
         return `
             void main(){
                 
-                float loopsf = 10.0;
+                float loopsf = 1.0;
                 float randsrng = 0.0005;
-                const int loops = 10;
+                const int loops = 1;
                 vec3 nray = ray / length(ray);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
                 for(int i=0;i<loops;i++){
