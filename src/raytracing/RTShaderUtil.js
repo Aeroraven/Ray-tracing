@@ -369,7 +369,12 @@ export class RTShaderUtil{
                 vec4 ambient = vec4(0.0,0.0,0.0,1.0);
                 vec4 skylight = vec4(0.0,0.0,0.0,1.0);
                 `+ambientSetting+`
-                for(int i=1;i < 10;i+=1){
+                vec2 rp_temp=transVec(rp.origin);
+                
+                //showOceanSky(accColor,rp_temp,uTime);
+                
+                for(int i=1;i < 30;i+=1){
+                    
                     rp.direction = rp.direction / length(rp.direction);
                     sRayCollisionResult hit = fRayCollision(rp);
                     if(hit.collided == false){
