@@ -340,9 +340,25 @@ export class RTShaderUtil{
             }
         `
     }
-
-    
-
+    static funcDef_GlsryReflection(){
+        return `
+        sRay fGlsryReflection(sRay inr,vec3 p,vec3 norm){
+            vec3 n = norm;
+            n = n / length(n);
+            if(dot(inr.direction,norm)>0.0){
+                n = -n;
+            }
+            vec3 o = uniformlyRandomDirectionNew();
+            if(dot(o,n)<0.0){
+                o = -o;
+            }
+            vec3 ox = (inr.direction/dot(inr.direction,n)+2.0*n)+o;
+            ox = ox/length(ox);
+            sRay rt = sRay(p,ox,inr.inrefra);
+            return rt
+        }
+        `
+    }
     //Function:Raytracing 光线追踪
     static funcDef_Raytracing(ambientSetting){
         return `
