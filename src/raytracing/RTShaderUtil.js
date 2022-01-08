@@ -596,9 +596,25 @@ export class RTShaderUtil{
             }
         `
     }
-
-    
-
+    static funcDef_GlsryReflection(){
+        return `
+        sRay fGlsryReflection(sRay inr,vec3 p,vec3 norm){
+            vec3 n = norm;
+            n = n / length(n);
+            if(dot(inr.direction,norm)>0.0){
+                n = -n;
+            }
+            vec3 o = uniformlyRandomDirectionNew();
+            if(dot(o,n)<0.0){
+                o = -o;
+            }
+            vec3 ox = (inr.direction/dot(inr.direction,n)+2.0*n)+o;
+            ox = ox/length(ox);
+            sRay rt = sRay(p,ox,inr.inrefra);
+            return rt
+        }
+        `
+    }
     //Function:Raytracing 光线追踪
     static funcDef_Raytracing(ambientSetting){
         return `
@@ -622,22 +638,27 @@ export class RTShaderUtil{
                         break;
                     }
                     accMaterial = accMaterial * hit.materialColor;
+                    float rndsample = rng();
 
-                    if(hit.hitType==1){
+                    if(hit.hitType==1 || (rndsample<0.3&&hit.hitType==5)){
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
                     }else if(hit.hitType==2){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
-                    }else if(hit.hitType==3){
+                    }else if(hit.hitType==3 || (hit.hitType==5)){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp=calRefract(rp,hit.colvex,hit.colnorm,hit.refra);
                     }else if(hit.hitType==0){
                         return accColor;
+                    }else if(hit.hitType==4){
+                        rp = fGlsryReflection(rp,hit.colvex,hit.colnorm);
+                        float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
                     }
                     rp.origin = rp.origin + rp.direction*0.002;
-                    if(i>25&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
+                    if(i>3&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
                         break;
                     }
                 }
@@ -651,9 +672,9 @@ export class RTShaderUtil{
         return `
             void main(){
                 
-                float loopsf = 60.0;
-                float randsrng = 0.00005;
-                const int loops = 60;
+                float loopsf = 10.0;
+                float randsrng = 0.0005;
+                const int loops = 10;
                 vec3 nray = ray / length(ray);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
                 for(int i=0;i<loops;i++){
@@ -662,7 +683,7 @@ export class RTShaderUtil{
                     fragc += fRaytracing(sRay(eye, nray + uniformlyRandomDirectionNew() * randsrng,1.0));
                 }
                 vec4 textc = texture(uTexture, vec2(1.0-tex.s,tex.t));
-                fragc = fGammaCorrection(fragc/loopsf,0.45);
+                fragc = fGammaCorrection(fragc/loopsf,0.40);
                 fragmentColor = (textc*float(uSamples) + fragc)/(float(uSamples)+1.0);
             }
         `
@@ -691,12 +712,13 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_DiffuseReflection,null],
             [RTShaderUtil.funcDef_InsidePlane,null],
             [RTShaderUtil.funcDef_PlaneNorm,null],
-            [RTShaderUtil.funcDef_calRefract,null],
-            [RTShaderUtil.funcDef_tellRefract,null],
+            [RTShaderUtil.funcDef_GlsryReflection,null],
             [RTShaderUtil.funcDef_RayPlaneIntersection,null],
             [RTShaderUtil.funcDef_RaySphereIntersection,null],
             [RTShaderUtil.funcDef_RayPoint,null],
             [RTShaderUtil.funcDef_SpecularReflection,null],
+            [RTShaderUtil.funcDef_calRefract,null],
+            [RTShaderUtil.funcDef_tellRefract,null],
             [RTShaderUtil.funcDef_RayCollision,funcParam.intersection],
             [RTShaderUtil.funcDef_ShadowLight,null],
             [RTShaderUtil.funcDef_ShadowTests,funcParam.pointlight],
@@ -743,7 +765,7 @@ export class RTShaderUtil{
             }
         }
         let ret = `#version 300 es
-            precision mediump float;
+            precision lowp float;
             precision lowp int;
         \n`
         ret += RTShaderUtil.uniformDefConcat(shaderMap)
