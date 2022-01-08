@@ -627,7 +627,7 @@ export class RTShaderUtil{
                 `+ambientSetting+`
                 vec2 rp_temp=transVec(rp.origin);
                 
-                showOceanSky(accColor,rp_temp,uTime);
+                //showOceanSky(accColor,rp_temp,uTime);
                 
                 for(int i=1;i < 30;i+=1){
                     
