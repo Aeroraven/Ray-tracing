@@ -50,5 +50,5 @@ Just run `npm run deploy`
 
 - **Miscellaneous Features**:
   - Encapsulated Camera
-  - Customized Light Configuration
+  - Customized Light Configuration 
 
