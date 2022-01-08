@@ -104,7 +104,7 @@ export class RTShaderUtil{
                 float a = dot(r.direction,r.direction);
                 float b = 2.0*(dot(r.direction,p));
                 float delta = b*b-4.0*a*(dot(p,p)-s.r*s.r);
-                if(delta<1e-4){
+                if(delta<1e-10){
                     return -1.0;
                 }else{
                     float sdelta = sqrt(delta);
@@ -137,7 +137,7 @@ export class RTShaderUtil{
                 float s2 = length(cross(v2,v3));
                 float s3 = length(cross(v3,v1));
                 float s0 = length(cross(p.y-p.x,p.z-p.x));
-                if(abs(abs(s0)-abs(s1)-abs(s2)-abs(s3))<1e-2){
+                if(abs(abs(s0)-abs(s1)-abs(s2)-abs(s3))<1e-5){
                     return true;
                 }
                 return false;
@@ -145,6 +145,19 @@ export class RTShaderUtil{
         `
     }
 
+    //Function:SpecularReflection 镜面反射
+    static funcDef_SpecularReflection(){
+        return `
+            sRay fSpecularReflection(sRay inr,vec3 p,vec3 n){
+                if(dot(inr.direction,n)>0.0){
+                    n = -n;
+                }
+                vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
+                sRay ret = sRay(p,ox/length(ox),inr.inrefra);
+                return ret;
+            }
+        `
+    }
 
     // 折射dch
     // sRay inr:入射光线
@@ -191,16 +204,12 @@ export class RTShaderUtil{
                 float cos1 = abs(Dt);
                 float sin1 = sqrt(1.0-Dt*Dt);
                 vec3 rfn = rfm*(sin2/cos2*cos1/sin1)-fnormvec*abs(Dt);
-                bool cond = judgeRefract(inr,p,N,colfra);
+                
                 sRay addrefra=sRay(p, rfn, 1.0);
-                if(cond!=cond){
-                    addrefra = fSpecularReflection(inr,p,N);
+                if(Dt>0.0){
+                    addrefra.inrefra = 1.0;
                 }else{
-                    if(Dt>0.0){
-                        addrefra.inrefra = 1.0;
-                    }else{
-                        addrefra.inrefra = matfra;
-                    }
+                    addrefra.inrefra = matfra;
                 }
                 return addrefra;
             }
@@ -235,20 +244,287 @@ export class RTShaderUtil{
             }
         `
     }
-    
-    //Function:SpecularReflection 镜面反射
-    static funcDef_SpecularReflection(){
+
+    // Ocean and Sky
+
+    // math
+    static funcDef_transVec(){
         return `
-            sRay fSpecularReflection(sRay inr,vec3 p,vec3 n){
-                if(dot(inr.direction,n)>0.0){
-                    n = -n;
-                }
-                vec3 ox = inr.direction/dot(inr.direction,n)+2.0*n;
-                sRay ret = sRay(p,ox/length(ox),inr.inrefra);
-                return ret;
+            vec2 transVec(vec3 invec) {
+                vec2 outvec=vec2(0.0,0.0);
+                outvec.x=1920.0*(atan(invec.x));
+                outvec.y=1080.0*(atan(invec.y));
+                return outvec;
             }
         `
     }
+
+    static funcDef_fromEuler(){
+        return `
+            mat3 fromEuler(vec3 ang) {
+                vec2 a1 = vec2(sin(ang.x),cos(ang.x));
+                vec2 a2 = vec2(sin(ang.y),cos(ang.y));
+                vec2 a3 = vec2(sin(ang.z),cos(ang.z));
+                mat3 m;
+                m[0] = vec3(a1.y*a3.y+a1.x*a2.x*a3.x,a1.y*a2.x*a3.x+a3.y*a1.x,-a2.y*a3.x);
+                m[1] = vec3(-a2.y*a1.x,a1.y*a2.y,a2.x);
+                m[2] = vec3(a3.y*a1.x*a2.x+a1.y*a3.x,a1.x*a3.x-a1.y*a3.y*a2.x,a2.y*a3.y);
+                return m;
+            }
+        `
+    }
+
+    static funcDef_hash(){
+        return `
+            float hash( vec2 p ) {
+                float h = dot(p,vec2(127.1,311.7));	
+                return fract(sin(h)*43758.5453123);
+            }
+        `
+    }
+
+    static funcDef_noise(){
+        return `
+            float noise( vec2 p ) {
+                vec2 i = floor( p );
+                vec2 f = fract( p );	
+                vec2 u = f*f*(3.0-2.0*f);
+                return -1.0+2.0*mix( mix( hash( i + vec2(0.0,0.0) ), 
+                        hash( i + vec2(1.0,0.0) ), u.x),
+                    mix( hash( i + vec2(0.0,1.0) ), 
+                        hash( i + vec2(1.0,1.0) ), u.x), u.y);
+            }
+        `
+    }
+
+    // lighting
+    static funcDef_diffuse(){
+        return `
+            float diffuse( vec3 n,vec3 l,float p ) {
+                return pow(dot(n,l) * 0.4 + 0.6,p);
+            }
+        `
+    }
+
+    static funcDef_specular(){
+        return `
+            float specular( vec3 n,vec3 l,vec3 e,float s ) {
+                float nrm = (s + 8.0) / (3.14 * 8.0);
+                return pow(max(dot(reflect(e,n),l),0.0),s) * nrm;
+            }
+        `
+    }
+
+    // sky 
+    static funcDef_getSkyColor(){
+        return `
+            vec3 getSkyColor( vec3 e ) {
+                e.y = (max(e.y,0.0)*0.8+0.2)*0.8;
+                return vec3((1.0-e.y)*(1.0-e.y), 1.0-e.y, 0.6+(1.0-e.y)*0.4) * 1.1;
+            }
+        `
+    }
+
+    // sea
+    static funcDef_sea_octave(){
+        return `
+            float sea_octave( vec2 uv, float choppy ) {
+                uv += noise(uv);        
+                vec2 wv = 1.0-abs(sin(uv));
+                vec2 swv = abs(cos(uv));    
+                wv = mix(wv,swv,wv);
+                return pow(1.0-pow(wv.x * wv.y,0.65),choppy);
+            }
+        `
+    }
+
+    static funcDef_map(){
+        return `
+            float map( vec3 p ) {
+                float freq = 0.16;
+                float amp = 0.2;
+                float choppy = 4.0;
+                // float freq = SEA_FREQ;
+                // float amp = SEA_HEIGHT;
+                // float choppy = SEA_CHOPPY;
+                // const int ITER_GEOMETRY = 3;
+                // const int ITER_FRAGMENT = 5;
+                // const float SEA_HEIGHT = 0.6;
+                // const float SEA_CHOPPY = 4.0;
+                // const float SEA_SPEED = 0.8;
+                // const float SEA_FREQ = 0.16;
+
+                // const mat2 octave_m = mat2(1.6,1.2,-1.2,1.6);
+
+                // float SEA_TIME = iGlobalTime * 0.8 + 100000.0;
+
+                vec2 uv = p.xz; uv.x *= 0.75;
+                float d, h = 0.0;    
+                for(int i = 0; i < 3; i++) {        
+                    d = sea_octave((uv)*0.16,4.0);
+                    d += sea_octave((uv)*0.16,4.0);
+                    h += d * 0.6;        
+                    uv *= mat2(1.6,1.2,-1.2,1.6);
+                    freq *= 1.9; amp *= 0.22;
+                    choppy = mix(choppy,1.0,0.2);
+                }
+                return p.y - h;
+
+            }
+        `
+    }
+
+    static funcDef_map_detailed(){
+        return `
+            float map_detailed( vec3 p ) {
+                float freq = 0.16;
+                float amp = 0.6;
+                float choppy = 4.0;
+
+                vec2 uv = p.xz; uv.x *= 0.75;
+                float d, h = 0.0;    
+                for(int i = 0; i < 3; i++) {        
+                    d = sea_octave((uv)*0.16,4.0);
+                    d += sea_octave((uv)*0.16,4.0);
+                    h += d * 0.6;        
+                    uv *= mat2(1.6,1.2,-1.2,1.6);
+                    freq *= 1.9; amp *= 0.22;
+                    choppy = mix(choppy,1.0,0.2);
+                }
+                return p.y - h;
+
+            }
+        `
+    }
+
+    static funcDef_getSeaColor(){
+        return `
+            vec3 getSeaColor(vec3 p, vec3 n, vec3 l, vec3 eye, vec3 dist) {
+
+                float SEA_HEIGHT = 0.6;
+                vec3 SEA_BASE = vec3(0.0,0.09,0.18);
+                vec3 SEA_WATER_COLOR = vec3(0.8,0.9,0.6)*0.6;
+
+                float fresnel = clamp(1.0 - dot(n,-eye), 0.0, 1.0);
+                fresnel = fresnel * fresnel * fresnel * 0.5;
+                    
+                vec3 reflected = getSkyColor(reflect(eye,n));    
+                vec3 refracted = SEA_BASE + diffuse(n,l,80.0) * SEA_WATER_COLOR * 0.12; 
+                
+                vec3 color = mix(refracted,reflected,fresnel);
+                
+                float atten = max(1.0 - dot(dist,dist) * 0.001, 0.0);
+                color += SEA_WATER_COLOR * (p.y - SEA_HEIGHT) * 0.18 * atten;
+                
+                color += vec3(specular(n,l,eye,60.0));
+                
+                return color;
+
+            }
+        `
+    }
+
+    // tracing
+    static funcDef_getNormal(){
+        return `
+            vec3 getNormal( vec3 p, float eps ) {
+
+                vec3 n;
+                n.y = map_detailed(p);    
+                n.x = map_detailed(vec3(p.x+eps,p.y,p.z)) - n.y;
+                n.z = map_detailed(vec3(p.x,p.y,p.z+eps)) - n.y;
+                n.y = eps;
+                highp vec3 n_temp=normalize(n);
+                return n_temp;
+
+            }
+        `
+    }
+
+    static funcDef_heightMapTracing(){
+        return `
+            float heightMapTracing( vec3 ori, vec3 dir, vec3 p ) {
+
+                float tm = 0.0;
+                float tx = 1000.0;    
+                float hx = map(ori + dir * tx);
+                if(hx > 0.0) {
+                    p = ori + dir * tx;
+                    return tx;   
+                }
+                float hm = map(ori + dir * tm);    
+                float tmid = 0.0;
+                for(int i = 0; i < 8; i++) {
+                    tmid = mix(tm,tx, hm/(hm-hx));                   
+                    p = ori + dir * tmid;                   
+                    float hmid = map(p);
+                    if(hmid < 0.0) {
+                        tx = tmid;
+                        hx = hmid;
+                    } else {
+                        tm = tmid;
+                        hm = hmid;
+                    }
+                }
+                return tmid;
+
+            }
+        `
+    }
+
+    static funcDef_getPixel(){
+        return `vec3 getPixel(vec2 coord, float time){
+
+                    vec2 iResolution=vec2(1920,1080);
+                    vec2 uv = coord / iResolution.xy;
+                    uv = uv * 2.0 - 1.0;
+                    uv.x *= iResolution.x / iResolution.y;    
+                        
+                    // ray
+                    vec3 ang = vec3(sin(time*3.0)*0.1,sin(time)*0.2+0.3,time);    
+                    vec3 ori = vec3(0.0,3.5,time*5.0);
+                    vec3 dir = normalize(vec3(uv.xy,-2.0)); dir.z += length(uv) * 0.14;
+                    dir = normalize(dir) * fromEuler(ang);
+                    
+                    // tracing
+                    vec3 p;
+                    heightMapTracing(ori,dir,p);
+                    vec3 dist = p - ori;
+                    vec3 n = getNormal(p, dot(dist,dist) * (0.1 / iResolution.x));
+                    //highp vec3 n=n_temp
+                    vec3 light = normalize(vec3(0.0,1.0,0.8)); 
+                            
+                    // color
+                    return mix(
+                        getSkyColor(dir),
+                        getSeaColor(p,n,light,dir,dist),
+                        pow(smoothstep(0.0,-0.02,dir.y),0.2));
+        }`
+    }
+
+    // main函数，显示海洋和天空
+    static funcDef_showOceanSky(){
+        return`
+            void showOceanSky(out vec4 fragColor, in vec2 fragCoord, float uTime){
+                //float time = iTime * 0.3 + iMouse.x*0.01;
+                float time=uTime*0.3;
+                //float time=0.3;
+                
+                vec3 color = vec3(0.0);
+                for(int i = -1; i <= 1; i++) {
+                    for(int j = -1; j <= 1; j++) {
+                        vec2 uv = fragCoord+vec2(i,j)/3.0;
+                        color += getPixel(uv, time);
+                    }
+                }
+                color /= 9.0;
+                
+                // post
+                fragColor = vec4(pow(color,vec3(0.65)), 1.0);
+            }
+        `
+    }
+
     //Function:DiffuseReflection 漫反射
     static funcDef_DiffuseReflection(){
         return `
@@ -263,26 +539,6 @@ export class RTShaderUtil{
                     o = -o;
                 }
                 sRay rt = sRay(p,o,inr.inrefra);
-                return rt;
-            }
-        `
-    }
-
-    static funcDef_GlsryReflection(){
-        return `
-            sRay fGlsryReflection(sRay inr,vec3 p,vec3 norm){
-                vec3 n = norm;
-                n = n / length(n);
-                if(dot(inr.direction,norm)>0.0){
-                    n = -n;
-                }
-                vec3 o = uniformlyRandomDirectionNew();
-                if(dot(o,n)<0.0){
-                    o = -o;
-                }
-                vec3 ox = (inr.direction/dot(inr.direction,n)+2.0*n)+o;
-                ox = ox/length(ox);
-                sRay rt = sRay(p,ox,inr.inrefra);
                 return rt;
             }
         `
@@ -388,7 +644,7 @@ export class RTShaderUtil{
                         rp = fDiffuseReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
-                    }else if(hit.hitType==2 ){
+                    }else if(hit.hitType==2){
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient);
                         rp = fSpecularReflection(rp,hit.colvex,hit.colnorm);
                     }else if(hit.hitType==3 || (hit.hitType==5)){
@@ -406,6 +662,7 @@ export class RTShaderUtil{
                         break;
                     }
                 }
+               
                 return accColor;
             }
         `
@@ -434,6 +691,22 @@ export class RTShaderUtil{
     //完成函数输出
     static funcDefConcat(funcParam){
         let lst = [
+            [RTShaderUtil.funcDef_transVec,null],
+            [RTShaderUtil.funcDef_fromEuler,null],
+            [RTShaderUtil.funcDef_hash,null],
+            [RTShaderUtil.funcDef_noise,null],
+            [RTShaderUtil.funcDef_diffuse,null],
+            [RTShaderUtil.funcDef_specular,null],
+            [RTShaderUtil.funcDef_getSkyColor,null],
+            [RTShaderUtil.funcDef_sea_octave,null],
+            [RTShaderUtil.funcDef_map,null],
+            [RTShaderUtil.funcDef_map_detailed,null],
+            [RTShaderUtil.funcDef_getSeaColor,null],
+            [RTShaderUtil.funcDef_getNormal,null],
+            [RTShaderUtil.funcDef_heightMapTracing,null],
+            [RTShaderUtil.funcDef_getPixel,null],
+            [RTShaderUtil.funcDef_showOceanSky,null],    
+            
             [RTShaderUtil.funcDef_GammaCorrection,null],
             [RTShaderUtil.funcDef_RandNoiseV3,null],
             [RTShaderUtil.funcDef_DiffuseReflection,null],
@@ -444,8 +717,8 @@ export class RTShaderUtil{
             [RTShaderUtil.funcDef_RaySphereIntersection,null],
             [RTShaderUtil.funcDef_RayPoint,null],
             [RTShaderUtil.funcDef_SpecularReflection,null],
-            [RTShaderUtil.funcDef_tellRefract,null],
             [RTShaderUtil.funcDef_calRefract,null],
+            [RTShaderUtil.funcDef_tellRefract,null],
             [RTShaderUtil.funcDef_RayCollision,funcParam.intersection],
             [RTShaderUtil.funcDef_ShadowLight,null],
             [RTShaderUtil.funcDef_ShadowTests,funcParam.pointlight],
