@@ -8,6 +8,7 @@ import { Rect } from "./primitives/Rect";
 import { Camera } from "./core/Camera";
 
 import RTSceneWithGeometry from "./raytracing/preset/RTSceneWithGeometry";
+import RTSceneWithGeometryOutdoors from "./raytracing/preset/RTSceneWithGeometryOutdoors";
 import RTGlassTest from "./raytracing/preset/RTGlassTest";
 import RTLiquidTest from "./raytracing/preset/RTLiquidTest";
 
@@ -49,7 +50,7 @@ gl.depthFunc(gl.LEQUAL)
 
 
 //Start Raytracing Render
-let rtscene = RTLiquidTest.configure(gl)
+let rtscene = RTGlassTest.configure(gl)
 
 
 rtscene.compile()

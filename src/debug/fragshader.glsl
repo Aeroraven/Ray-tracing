@@ -26,18 +26,6 @@ uniform vec3 RTPlanewallback2_VC;
 uniform vec4 RTPlanewallback2_EM;
 uniform float RTPlanewallback2_RF;
 uniform vec4 RTPlanewallback2_CL;
-uniform vec3 RTPlanecelling1_VA;
-uniform vec3 RTPlanecelling1_VB;
-uniform vec3 RTPlanecelling1_VC;
-uniform vec4 RTPlanecelling1_EM;
-uniform float RTPlanecelling1_RF;
-uniform vec4 RTPlanecelling1_CL;
-uniform vec3 RTPlanecelling2_VA;
-uniform vec3 RTPlanecelling2_VB;
-uniform vec3 RTPlanecelling2_VC;
-uniform vec4 RTPlanecelling2_EM;
-uniform float RTPlanecelling2_RF;
-uniform vec4 RTPlanecelling2_CL;
 uniform vec3 RTPlanewallleft1_VA;
 uniform vec3 RTPlanewallleft1_VB;
 uniform vec3 RTPlanewallleft1_VC;
@@ -62,18 +50,6 @@ uniform vec3 RTPlanewallright2_VC;
 uniform vec4 RTPlanewallright2_EM;
 uniform float RTPlanewallright2_RF;
 uniform vec4 RTPlanewallright2_CL;
-uniform vec3 RTPlanerectlight1_VA;
-uniform vec3 RTPlanerectlight1_VB;
-uniform vec3 RTPlanerectlight1_VC;
-uniform vec4 RTPlanerectlight1_EM;
-uniform float RTPlanerectlight1_RF;
-uniform vec4 RTPlanerectlight1_CL;
-uniform vec3 RTPlanerectlight2_VA;
-uniform vec3 RTPlanerectlight2_VB;
-uniform vec3 RTPlanerectlight2_VC;
-uniform vec4 RTPlanerectlight2_EM;
-uniform float RTPlanerectlight2_RF;
-uniform vec4 RTPlanerectlight2_CL;
 uniform vec3 RTSpheresphere1_VC;
 uniform float RTSpheresphere1_RA;
 uniform vec4 RTSpheresphere1_EM;
@@ -102,6 +78,7 @@ uniform int uSamples;
 uniform sampler2D uTexture;
 
             uvec2 seeds = uvec2(1.0,1.0);
+            vec3 sunPos = vec3(0,9,0);
             in vec3 ray;
             in vec2 tex;
             out vec4 fragmentColor;
@@ -360,12 +337,61 @@ uniform sampler2D uTexture;
                 uint  n = 1103515245U * ( (q.x) ^ (q.y >> 3U) );
                 return float(n) * (1.0 / float(0xffffffffU));
             }
+            float rng2()
+            {
+                uvec2 seedss = uvec2(1);
+                uvec2 q = 1103515245U * ( (seedss >> 1U) ^ (seedss.yx) );
+                uint  n = 1103515245U * ( (q.x) ^ (q.y >> 3U) );
+                return float(n) * (1.0 / float(0xffffffffU));
+            }
             vec3 uniformlyRandomDirectionNew() {
                 float up = rng() * 2.0 - 1.0; 
                 float over = sqrt( max(0.0, 1.0 - up * up) );
                 float around = rng() * 6.28318530717;
                 return normalize(vec3(cos(around) * over, up, sin(around) * over));	
             }
+            float getOceanWaterHeightDetail( vec3 p )
+            {
+                mat2 OCTAVE_M  = mat2(1.6, 1.2, -1.2, 1.6);
+                p.x *= 2.2;
+                p.z *= 2.2;
+                float freq = 5.0;
+                float amp = 9.2;
+                float choppy = 99.0;
+                float sea_time = 2.0;
+                
+                vec2 uv = p.zx; uv.x *= 0.75;
+                float d, h = 0.0;    
+                for(int i = 0; i < 4; i++)
+                {        
+                    d =  sea_octave((uv + sea_time) * freq, choppy);
+                    d += sea_octave((uv - sea_time) * freq, choppy);
+                    h += d * amp;        
+                    uv *= OCTAVE_M; freq *= 1.9; amp *= 0.22;
+                    choppy = mix(choppy, 1.0, 0.2);
+                }
+                return h;
+            }
+            float getOceanWaterHeight( vec3 p )
+            {
+                mat2 OCTAVE_M  = mat2(1.6, 1.2, -1.2, 1.6);
+                p.x *= 1.0;
+                p.z *= 1.0;
+                float freq = 5.0;
+                float amp = 0.0;
+                float choppy = 1.0;
+                float sea_time = 2.0;
+                
+                vec2 uv = p.xz; uv.x *= 0.75;
+                float d, h = 0.0;
+
+                d =  sea_octave((uv + sea_time) * freq, choppy);
+                d += sea_octave((uv - sea_time) * freq, choppy);
+                h += d * amp;        
+                
+                return h-0.2;
+            }
+
         
             sRay fDiffuseReflection(sRay inr,vec3 p,vec3 norm){
                 vec3 n = norm;
@@ -597,46 +623,6 @@ uniform sampler2D uTexture;
             
         
                 if(true){
-                    sPlane pl = sPlane(RTPlanecelling1_VA,RTPlanecelling1_VB,RTPlanecelling1_VC,RTPlanecelling1_EM,RTPlanecelling1_CL);
-                    tc = fRayPlaneIntersection(r,pl);
-                    if(tc>0.0){
-                        vec3 ip = fRayPoint(r,tc);
-                        if(fInsidePlane(pl,ip)){
-                            if(tc<t){
-                                t=tc;
-                                norm = fPlaneNorm(pl);
-                                emicolor = vec4(RTPlanecelling1_EM);
-                                matcolor = vec4(RTPlanecelling1_CL);
-                                hitType = 1;
-                                refra = RTPlanecelling1_RF;
-                                collided=true;
-                            }
-                        }
-                    }
-                }
-            
-        
-                if(true){
-                    sPlane pl = sPlane(RTPlanecelling2_VA,RTPlanecelling2_VB,RTPlanecelling2_VC,RTPlanecelling2_EM,RTPlanecelling2_CL);
-                    tc = fRayPlaneIntersection(r,pl);
-                    if(tc>0.0){
-                        vec3 ip = fRayPoint(r,tc);
-                        if(fInsidePlane(pl,ip)){
-                            if(tc<t){
-                                t=tc;
-                                norm = fPlaneNorm(pl);
-                                emicolor = vec4(RTPlanecelling2_EM);
-                                matcolor = vec4(RTPlanecelling2_CL);
-                                hitType = 1;
-                                refra = RTPlanecelling2_RF;
-                                collided=true;
-                            }
-                        }
-                    }
-                }
-            
-        
-                if(true){
                     sPlane pl = sPlane(RTPlanewallleft1_VA,RTPlanewallleft1_VB,RTPlanewallleft1_VC,RTPlanewallleft1_EM,RTPlanewallleft1_CL);
                     tc = fRayPlaneIntersection(r,pl);
                     if(tc>0.0){
@@ -716,46 +702,6 @@ uniform sampler2D uTexture;
                 }
             
         
-                if(true){
-                    sPlane pl = sPlane(RTPlanerectlight1_VA,RTPlanerectlight1_VB,RTPlanerectlight1_VC,RTPlanerectlight1_EM,RTPlanerectlight1_CL);
-                    tc = fRayPlaneIntersection(r,pl);
-                    if(tc>0.0){
-                        vec3 ip = fRayPoint(r,tc);
-                        if(fInsidePlane(pl,ip)){
-                            if(tc<t){
-                                t=tc;
-                                norm = fPlaneNorm(pl);
-                                emicolor = vec4(RTPlanerectlight1_EM);
-                                matcolor = vec4(RTPlanerectlight1_CL);
-                                hitType = 1;
-                                refra = RTPlanerectlight1_RF;
-                                collided=true;
-                            }
-                        }
-                    }
-                }
-            
-        
-                if(true){
-                    sPlane pl = sPlane(RTPlanerectlight2_VA,RTPlanerectlight2_VB,RTPlanerectlight2_VC,RTPlanerectlight2_EM,RTPlanerectlight2_CL);
-                    tc = fRayPlaneIntersection(r,pl);
-                    if(tc>0.0){
-                        vec3 ip = fRayPoint(r,tc);
-                        if(fInsidePlane(pl,ip)){
-                            if(tc<t){
-                                t=tc;
-                                norm = fPlaneNorm(pl);
-                                emicolor = vec4(RTPlanerectlight2_EM);
-                                matcolor = vec4(RTPlanerectlight2_CL);
-                                hitType = 1;
-                                refra = RTPlanerectlight2_RF;
-                                collided=true;
-                            }
-                        }
-                    }
-                }
-            
-        
 
                 if(true){
                     sSphere sp = sSphere(RTSpheresphere1_VC,RTSpheresphere1_RA,RTSpheresphere1_EM,RTSpheresphere1_CL);
@@ -765,7 +711,7 @@ uniform sampler2D uTexture;
                         norm = fRayPoint(r,tc) - RTSpheresphere1_VC;
                         emicolor = vec4(RTSpheresphere1_EM);
                         matcolor = vec4(RTSpheresphere1_CL);
-                        hitType = 4;
+                        hitType = 1;
                         refra = RTSpheresphere1_RF;
                         collided=true;
                     }
@@ -780,29 +726,35 @@ uniform sampler2D uTexture;
                         norm = fRayPoint(r,tc) - RTSpheresphere2_VC;
                         emicolor = vec4(RTSpheresphere2_EM);
                         matcolor = vec4(RTSpheresphere2_CL);
-                        hitType = 3;
+                        hitType = 1;
                         refra = RTSpheresphere2_RF;
                         collided=true;
                     }
                 }
         
                 if(true){
-                    float dy = RTWaterwatersurface_HG;
+                    float dy = -0.2;
                     vec3 dr = r.direction/length(r.direction);
-                    if(dr.y<0.01){
-                        tc=-1;
-                    }else{
-                        tc = (dy-r.origin.y)/dr.y;
+                    vec3 pos = vec3(r.origin.x,r.origin.y,r.origin.z);
+                    float h = 0.0;
+                    float d = 0.0;
+                    
+                    for(int i = 0; i < 20; i++)
+                    {
+                        h = (getOceanWaterHeight(pos)-pos.y);
+                        if (d > 4000.0 || h < 1e-5) break;
+                        d += h;
+                        pos += dr*h;
                     }
+                    tc = (pos.y-r.origin.y)/dr.y;
                     if(tc>0.0){
-                        vec3 ip = fRayPoint(r,tc);
                         if(tc<t){
                             t=tc;
                             norm = vec3(dr.x,-dr.y,dr.z);
-                            emicolor = vec4(undefined);
-                            matcolor = vec4(undefined);
-                            hitType = 3;
-                            refra = undefined;
+                            emicolor = vec4(RTWaterwatersurface_EM);
+                            matcolor = vec4(RTWaterwatersurface_CL);
+                            hitType = 6;
+                            refra = RTWaterwatersurface_RF;
                             collided=true;
                         }
                     }
@@ -874,6 +826,14 @@ uniform sampler2D uTexture;
                         rp = fGlsryReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
+                    }else if(hit.hitType==6){
+                        float eps = 2.0;
+                        float dx = getOceanWaterHeightDetail(hit.colvex - vec3(eps,0,0)) - getOceanWaterHeightDetail(hit.colvex  + vec3(eps,0,0));
+                        float dy = eps*2.0;
+                        float dz = getOceanWaterHeightDetail(hit.colvex - vec3(0,0,eps)) - getOceanWaterHeightDetail(hit.colvex  + vec3(0,0,eps));
+                        hit.colnorm = vec3(dx,dy,dz);
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                        rp=calRefract(rp,hit.colvex,hit.colnorm,hit.refra);
                     }
                     rp.origin = rp.origin + rp.direction*0.002;
                     if(i>3&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){

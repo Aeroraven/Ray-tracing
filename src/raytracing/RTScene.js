@@ -21,7 +21,7 @@ export class RTScene{
         this.compiledShader = null
         this.geometryList = []
 
-        this.renderOutput = [ new WGLTexture(gl,512,512,null),new WGLTexture(gl,512,512,null)]
+        this.renderOutput = [ new WGLTexture(gl,800,800,null),new WGLTexture(gl,800,800,null)]
         this.frameBuffer = new WGLFrameBuffer(gl)
         this.frameBuffer.bindTexturePingPong(gl.COLOR_ATTACHMENT0,this.renderOutput[0],this.renderOutput[0])
 
