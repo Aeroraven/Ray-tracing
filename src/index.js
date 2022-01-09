@@ -9,6 +9,7 @@ import { Camera } from "./core/Camera";
 
 import RTSceneWithGeometry from "./raytracing/preset/RTSceneWithGeometry";
 import RTGlassTest from "./raytracing/preset/RTGlassTest";
+import RTLiquidTest from "./raytracing/preset/RTLiquidTest";
 
 
 //Preparing Canvas
@@ -48,7 +49,7 @@ gl.depthFunc(gl.LEQUAL)
 
 
 //Start Raytracing Render
-let rtscene = RTGlassTest.configure(gl)
+let rtscene = RTLiquidTest.configure(gl)
 
 
 rtscene.compile()
@@ -62,6 +63,9 @@ let dispmonitor = document.getElementById("sample641")
 let dispInterval = 5
 let disableAnimation = true
 function render(){
+    /*rtscene.compile()
+    rtscene.sampleCount=0
+    states = 0*/
     states = states+1
     monitor.innerHTML = "RenderedFrames:"+states+", RenderFPS:"+parseInt(states*1000/(Date.now()-timeStart))
     dispmonitor.innerHTML = " DisplayedFrames:"+dispSample+", DispFPS:"+parseInt(dispSample*1000/(Date.now()-timeStart))

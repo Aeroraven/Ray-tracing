@@ -30,4 +30,4 @@ RTMaterial.SPECULAR = 2
 RTMaterial.REFRACTION = 3
 RTMaterial.METAL = 4
 RTMaterial.MOSSY = 5
-
+RTMaterial.WATER = 6

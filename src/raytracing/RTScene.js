@@ -108,7 +108,7 @@ export class RTScene{
         this.skylight.updateMap(this.shaderVar)
         this.shaderVar.insert('uProjectionMatrix',this.screen.getMatrix().proj,RTShaderVariableMap.MAT4)
         this.shaderVar.insert('uModelViewMatrix',this.screen.getMatrix().view,RTShaderVariableMap.MAT4)
-        this.shaderVar.insert('uTime',Date.now()-this.startTimestamp,RTShaderVariableMap.FLOAT)
+        this.shaderVar.insert('uTime',(Date.now()-this.startTimestamp)*0.00005,RTShaderVariableMap.FLOAT)
         this.shaderVar.insert('uSamples',this.sampleCount,RTShaderVariableMap.INT)
         this.loadAlternativeTexture()
     }

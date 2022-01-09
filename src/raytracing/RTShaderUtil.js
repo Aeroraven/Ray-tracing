@@ -236,12 +236,61 @@ export class RTShaderUtil{
                 uint  n = 1103515245U * ( (q.x) ^ (q.y >> 3U) );
                 return float(n) * (1.0 / float(0xffffffffU));
             }
+            float rng2()
+            {
+                uvec2 seedss = uvec2(1);
+                uvec2 q = 1103515245U * ( (seedss >> 1U) ^ (seedss.yx) );
+                uint  n = 1103515245U * ( (q.x) ^ (q.y >> 3U) );
+                return float(n) * (1.0 / float(0xffffffffU));
+            }
             vec3 uniformlyRandomDirectionNew() {
                 float up = rng() * 2.0 - 1.0; 
                 float over = sqrt( max(0.0, 1.0 - up * up) );
                 float around = rng() * 6.28318530717;
                 return normalize(vec3(cos(around) * over, up, sin(around) * over));	
             }
+            float getOceanWaterHeightDetail( vec3 p )
+            {
+                mat2 OCTAVE_M  = mat2(1.6, 1.2, -1.2, 1.6);
+                p.x *= 2.2;
+                p.z *= 2.2;
+                float freq = 2.0;
+                float amp = 1.2;
+                float choppy = 4.0;
+                float sea_time = 2.0;
+                
+                vec2 uv = p.zx; uv.x *= 0.75;
+                float d, h = 0.0;    
+                for(int i = 0; i < 4; i++)
+                {        
+                    d =  sea_octave((uv + sea_time) * freq, choppy);
+                    d += sea_octave((uv - sea_time) * freq, choppy);
+                    h += d * amp;        
+                    uv *= OCTAVE_M; freq *= 1.9; amp *= 0.22;
+                    choppy = mix(choppy, 1.0, 0.2);
+                }
+                return h-0.5;
+            }
+            float getOceanWaterHeight( vec3 p )
+            {
+                mat2 OCTAVE_M  = mat2(1.6, 1.2, -1.2, 1.6);
+                p.x *= 1.0;
+                p.z *= 1.0;
+                float freq = 2.3;
+                float amp = 0.05;
+                float choppy = 2.0;
+                float sea_time = 2.0;
+                
+                vec2 uv = p.xz; uv.x *= 0.75;
+                float d, h = 0.0;
+
+                d =  sea_octave((uv + sea_time) * freq, choppy);
+                d += sea_octave((uv - sea_time) * freq, choppy);
+                h += d * amp;        
+                
+                return h-0.5;
+            }
+
         `
     }
 
@@ -633,6 +682,15 @@ export class RTShaderUtil{
                     
                     rp.direction = rp.direction / length(rp.direction);
                     sRayCollisionResult hit = fRayCollision(rp);
+                    /*
+                    if(hit.collided == false && i==1){
+                        accColor = vec4(0.0,1.0,0.0,1.0); 
+                        break;
+                    }
+                    if(hit.hitType == 6 && i==1){
+                        accColor = vec4(1.0,0.0,0.0,1.0); 
+                        break;
+                    }*/
                     if(hit.collided == false){
                         accColor = accColor + accMaterial * skylight; 
                         break;
@@ -656,6 +714,14 @@ export class RTShaderUtil{
                         rp = fGlsryReflection(rp,hit.colvex,hit.colnorm);
                         float lambert = abs(dot(hit.colnorm,rp.direction))/length(hit.colnorm)/length(rp.direction);
                         accColor = accColor + accMaterial * (hit.emissionColor+ambient) * lambert;
+                    }else if(hit.hitType==6){
+                        float eps = 2.0;
+                        float dx = getOceanWaterHeightDetail(hit.colvex - vec3(eps,0,0)) - getOceanWaterHeightDetail(hit.colvex  + vec3(eps,0,0));
+                        float dy = eps*2.0;
+                        float dz = getOceanWaterHeightDetail(hit.colvex - vec3(0,0,eps)) - getOceanWaterHeightDetail(hit.colvex  + vec3(0,0,eps));
+                        hit.colnorm = vec3(dx,dy,dz);
+                        accColor = accColor + accMaterial * (hit.emissionColor+ambient);
+                        rp=calRefract(rp,hit.colvex,hit.colnorm,hit.refra);
                     }
                     rp.origin = rp.origin + rp.direction*0.002;
                     if(i>3&&accMaterial.x<1e-2&&accMaterial.y<1e-2&&accMaterial.z<1e-2){
@@ -673,7 +739,7 @@ export class RTShaderUtil{
             void main(){
                 
                 float loopsf = 1.0;
-                float randsrng = 0.0005;
+                float randsrng = 0.001;
                 const int loops = 1;
                 vec3 nray = ray / length(ray);
                 vec4 fragc = vec4(0.0,0.0,0.0,0.0);
@@ -743,6 +809,7 @@ export class RTShaderUtil{
     static globalVarDefConcat(){
         return `
             uvec2 seeds = uvec2(1.0,1.0);
+            vec3 sunPos = vec3(0,9,0);
             in vec3 ray;
             in vec2 tex;
             out vec4 fragmentColor;

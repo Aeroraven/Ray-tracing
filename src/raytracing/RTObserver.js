@@ -10,7 +10,7 @@ export class RTObserver{
         this.cam.setCamPosition(new Vec(0,0,-3))
         this.cam.setCamUp(new Vec(0,1,0))
         this.cam.setCamCenter(new Vec(0,0,0))
-        this.screenPos = new Vec(0,0,-3)
+        this.screenPos = new Vec(0,0,0)
         this.dist = 3
     }
     getCameraMatrix(){
