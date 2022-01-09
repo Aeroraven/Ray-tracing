@@ -2,3 +2,10 @@ path-tracer/node_modules
 path-tracer/package-lock.json
 path-tracer/dist/bundle.js
 path-tracer/dist/bundle.js
+<<<<<<< HEAD
+=======
+photon-mapping/node_modules
+photon-mapping/package-lock.json
+photon-mapping/dist/bundle.js
+photon-mapping/dist/bundle.js
+>>>>>>> dev_PM
