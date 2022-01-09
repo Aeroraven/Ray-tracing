@@ -1,4 +1,4 @@
-### Ray Tracing Renderer for WebGL
+## Ray Tracing Renderer for WebGL
 
 A clumsy attempt to re-implement ray tracing renderer based on WebGL & ES6.
 
