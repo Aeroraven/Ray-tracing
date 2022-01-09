@@ -1,4 +1,4 @@
-node_modules
-package-lock.json
-dist/bundle.js
-dist/bundle.js
+path-tracer/node_modules
+path-tracer/package-lock.json
+path-tracer/dist/bundle.js
+path-tracer/dist/bundle.js
