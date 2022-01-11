@@ -50,7 +50,7 @@ gl.depthFunc(gl.LEQUAL)
 
 
 //Start Raytracing Render
-let rtscene = RTGlassTest.configure(gl)
+let rtscene = RTSceneWithGeometry.configure(gl)
 
 
 rtscene.compile()

@@ -150,11 +150,8 @@ export class RTScene{
     updateUniform(){
         this.shaderVar.insert('uTime',new Date().getTime()-this.startTimestamp,RTShaderVariableMap.FLOAT)
         this.shaderVar.insert('uSamples',this.sampleCount,RTShaderVariableMap.INT)
-<<<<<<< HEAD:path-tracer/src/raytracing/RTScene.js
         this.observer.prepareShaderMap(this.shaderVar)
-=======
         console.log(this.sampleCount)
->>>>>>> dev_PM:photon-mapping/src/raytracing/RTScene.js
     }
     clear(){
         this.frameBuffer.start()

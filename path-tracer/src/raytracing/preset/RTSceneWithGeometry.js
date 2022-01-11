@@ -37,7 +37,7 @@ export default class RTSceneWithGeometry{
                 new Color(1,1,1,1.0),
                 new Color(0,0,0,1.0),
                 RTMaterial.REFRACTION,
-                1.04
+                1.11
             ),
             "sphere2"
         )
