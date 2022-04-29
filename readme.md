@@ -34,7 +34,7 @@ Just run `npm run deploy`
 
 - **Algorithms**:
   - Path Tracing Algorithm
-  - Photon Mapping Algorithm (By PotatoMaster)
+  - Photon Mapping Algorithm (By HugePotatoMonster(https://github.com/HugePotatoMonster))
 - **Geometry**:
   - Sphere
   - Planar Composites (Triangle, Tetrahedron)
