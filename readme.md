@@ -2,11 +2,11 @@
 
 A clumsy attempt to re-implement ray tracing renderer based on WebGL & ES6.
 
-#### License
+### License
 AGPL 3.0
 
 
-#### Dependencies & Environment
+### Dependencies & Environment
 
 - **Foundation**: WebGL & ECMAScript 2015
 - **Javascript Package Management**: Node.js
@@ -17,7 +17,7 @@ AGPL 3.0
 
 
 
-#### To Launch The Project
+### To Launch The Project
 
 **Prerequisites**
 
@@ -32,7 +32,7 @@ Just run `npm run deploy`
 
 
 
-#### Features Supported
+### Features Supported
 
 - **Algorithms**:
   - Path Tracing Algorithm
