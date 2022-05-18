@@ -1,6 +1,6 @@
 ## Ray Tracing Renderer for WebGL
 
-A clumsy attempt to re-implement ray tracing renderer based on WebGL & ES6.
+A clumsy attempt to re-implement ray tracing renderer based on WebGL.
 
 ### License
 AGPL 3.0
@@ -8,7 +8,7 @@ AGPL 3.0
 
 ### Dependencies & Environment
 
-- **Foundation**: WebGL & ECMAScript 2015
+- **Foundation**: WebGL
 - **Javascript Package Management**: Node.js
 - **Shader**: GLSL (OpenGL ES 3)
 - **Mathematical Supports**: glMatrix
