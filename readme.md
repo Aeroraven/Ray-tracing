@@ -2,6 +2,8 @@
 
 A clumsy attempt to re-implement ray tracing renderer based on WebGL & ES6.
 
+#### License
+AGPL 3.0
 
 
 #### Dependencies & Environment
