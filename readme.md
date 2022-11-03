@@ -3,7 +3,8 @@
 A clumsy attempt to re-implement ray tracing renderer based on WebGL.
 
 ### License
-AGPL 3.0
+**Project Source Code**: AGPL 3.0
+**Project Document**:  CC-BY-NC-SA 4.0
 
 
 ### Dependencies & Environment
@@ -54,3 +55,7 @@ Just run `npm run deploy`
   - Encapsulated Camera
   - Customized Light Configuration
 
+### Acknowledgements
+
+Projects we used for reference have already been listed here: https://aeroraven.github.io/2022/02/23/cg-course-1-raytracing/ (In Simplified Chinese)
+The document which contains acknowledgement is licensed under CC-BY-NC-SA 4.0 License
