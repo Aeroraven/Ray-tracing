@@ -2,6 +2,8 @@
 
 A clumsy attempt to re-implement ray tracing renderer based on WebGL. 
 
+NOTE: Before cloning or referring to this repository, read the WARNING section below.
+
 
 ### 1. License
 **Project Source Code**: AGPL 3.0
