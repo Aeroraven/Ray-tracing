@@ -55,7 +55,7 @@ Just run `npm run deploy`
 ### WARNING & DISCLAIMER
 [2023-09-28] Aeroraven: This repository might stay UNMAINTAINED for it serves as the archive of the course project.
 
-[2023-09-28] Aeroraven: Path tracing (not including photon mapping) implementation details in this repository might be WRONG. Problems include sampling mistakes and incorrect material processing. These problems have already been alleviated in the new repo. For detailed information, visit: https://github.com/Aeroraven/Aria/blob/main/Active-v2/src/examples/AriaStagePathTracing.ts
+[2023-09-28] Aeroraven: Path tracing (not including photon mapping) implementation details in this repository might be WRONG. Problems include sampling mistakes and incorrect material processing. These problems have already been alleviated in the new repo. For detailed information, visit: [https://github.com/Aeroraven/Aria/blob/main/Active-v2/src/examples/AriaStagePathTracing.ts](https://github.com/Aeroraven/Aria/blob/main/Aria-v2/src/examples/AriaStagePathTracing.ts)
 
 
 ### 5. Acknowledgements
